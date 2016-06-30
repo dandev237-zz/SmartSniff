@@ -82,14 +82,14 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String CREATE_SESSIONS_TABLE = "CREATE TABLE " + TABLE_SESSIONS +
                 "(" +
-                KEY_SESSION_ID + " INTEGER PRIMARY KEY," +
+                KEY_SESSION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_SESSION_STARTDATE + " TEXT," +
                 KEY_SESSION_ENDDATE + " TEXT" +
                 ")";
 
         String CREATE_DEVICES_TABLE = "CREATE TABLE " + TABLE_DEVICES +
                 "(" +
-                KEY_DEVICE_ID + " INTEGER PRIMARY KEY," +
+                KEY_DEVICE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_DEVICE_SSID + " TEXT," +
                 KEY_DEVICE_BSSID + " TEXT," +
                 KEY_DEVICE_CHARACTERISTICS + " TEXT," +
@@ -98,7 +98,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
 
         String CREATE_LOCATIONS_TABLE = "CREATE TABLE " + TABLE_LOCATIONS +
                 "(" +
-                KEY_LOCATION_ID + " INTEGER PRIMARY KEY," +
+                KEY_LOCATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_LOCATION_DATE + " TEXT," +
                 KEY_LOCATION_COORDINATES + " TEXT" +
                 ")";
