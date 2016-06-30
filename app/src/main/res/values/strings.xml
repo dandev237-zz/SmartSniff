@@ -1,12 +1,12 @@
 <resources>
+    <!-- MainActivity strings -->
     <string name="app_name">SmartSniff</string>
-    <string name="no_results_text">No hay datos de escaneo</string>
     <string name="scan_button_standby">Escanear</string>
     <string name="scan_button_stop">Parar</string>
-    <string name="status_text_standby">En espera</string>
-    <string name="status_text_scanning">Escaneando...</string>
     <string name="action_settings">Configuración</string>
     <string name="action_store_local">Guardar datos</string>
     <string name="action_send_data">Enviar datos</string>
     <string name="action_delete_data">Borrar datos</string>
+    <string name="init_date">Fecha de inicio:</string>
+    <string name="discoveries">Nº. hallazgos:</string>
 </resources>
