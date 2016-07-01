@@ -1,8 +1,10 @@
 package xyz.smartsniff;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * This class handles database operations such as reading, writing and upgrading.
@@ -12,6 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  * Fecha: 30/06/2016
  */
 public class SessionDatabaseHelper extends SQLiteOpenHelper {
+
     //Singleton instance
     private static SessionDatabaseHelper singletonInstance;
 
@@ -43,6 +46,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_LOCATION_COORDINATES = "coordinates";
 
     //Association Table Columns
+    private static final String KEY_ASSOCIATION_ID = "id";
     private static final String KEY_ASSOCIATION_ID_SESSION_FK = "idSession";
     private static final String KEY_ASSOCIATION_ID_DEVICE_FK = "idDevice";
     private static final String KEY_ASSOCIATION_ID_LOCATION_FK = "idLocation";
@@ -105,6 +109,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
 
         String CREATE_ASSOCIATION_TABLE = "CREATE TABLE " + TABLE_ASOCSESSIONSDEVICES +
                 "(" +
+                KEY_ASSOCIATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 KEY_ASSOCIATION_ID_SESSION_FK + " INTEGER REFERENCES " + TABLE_SESSIONS + "," +
                 KEY_ASSOCIATION_ID_DEVICE_FK + " INTEGER REFERENCES " + TABLE_DEVICES + "," +
                 KEY_ASSOCIATION_ID_LOCATION_FK + " INTEGER REFERENCES " + TABLE_LOCATIONS +
@@ -132,5 +137,62 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
-    //TODO: ADD CRUD OPERATIONS
+    //CRUD Operations
+
+    public void addSession(Session session){
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try{
+            ContentValues values = new ContentValues();
+            values.put(KEY_SESSION_STARTDATE, session.getStartDate());
+            values.put(KEY_SESSION_ENDDATE, session.getEndDate());
+
+            db.insertOrThrow(TABLE_SESSIONS, null, values);
+            db.setTransactionSuccessful();
+        }catch(Exception e){
+            Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
+        }finally {
+            db.endTransaction();
+        }
+    }
+
+    public void addDevice (Device device){
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try{
+            ContentValues values = new ContentValues();
+            values.put(KEY_DEVICE_SSID, device.getSsid());
+            values.put(KEY_DEVICE_BSSID, device.getBssid());
+            values.put(KEY_DEVICE_CHARACTERISTICS, device.getCharacteristics());
+            values.put(KEY_DEVICE_TYPE, device.getType().toString());
+
+            db.insertOrThrow(TABLE_DEVICES, null, values);
+            db.setTransactionSuccessful();
+        }catch(Exception e){
+            Log.d("ADD DEVICE TO DB", "ERROR WHILE ADDING A DEVICE TO DB");
+        }finally {
+            db.endTransaction();
+        }
+    }
+
+    public void addLocation (Location location){
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try{
+            ContentValues values = new ContentValues();
+            values.put(KEY_LOCATION_DATE, location.getDate());
+            values.put(KEY_LOCATION_COORDINATES, location.getCoordinatesString());
+
+            db.insertOrThrow(TABLE_LOCATIONS, null, values);
+        }catch(Exception e){
+            Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
+        }finally {
+            db.endTransaction();
+        }
+    }
+
+    // TODO: Querying records, review association table
 }

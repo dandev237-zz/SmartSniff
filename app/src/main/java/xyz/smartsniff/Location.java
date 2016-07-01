@@ -33,6 +33,10 @@ public class Location {
         return coordinates;
     }
 
+    public String getCoordinatesString(){
+        return coordinates.latitude + ", " + coordinates.longitude;
+    }
+
     public void setCoordinates(LatLng coordinates) {
         this.coordinates = coordinates;
     }
