@@ -3,6 +3,7 @@ package xyz.smartsniff;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Date;
+import java.util.LinkedList;
 
 /**
  * Model class to represent locations.
@@ -15,10 +16,20 @@ public class Location {
 
     private String date;
     private LatLng coordinates;
+    private LinkedList<Device> locatedDevices;
 
     public Location(Date date, LatLng coordinates){
         this.date = Utils.formatDate(date);
         this.coordinates = coordinates;
+        locatedDevices = new LinkedList<>();
+    }
+
+    public void addFoundDevice(Device device){
+        locatedDevices.add(device);
+    }
+
+    public LinkedList<Device> getLocatedDevices() {
+        return locatedDevices;
     }
 
     public String getDate() {

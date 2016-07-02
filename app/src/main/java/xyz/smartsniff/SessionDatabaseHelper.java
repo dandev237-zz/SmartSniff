@@ -15,6 +15,8 @@ import android.util.Log;
  */
 public class SessionDatabaseHelper extends SQLiteOpenHelper {
 
+    private long sessionId = 0, deviceId = 0, locationId = 0;
+
     //Singleton instance
     private static SessionDatabaseHelper singletonInstance;
 
@@ -46,7 +48,6 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_LOCATION_COORDINATES = "coordinates";
 
     //Association Table Columns
-    private static final String KEY_ASSOCIATION_ID = "id";
     private static final String KEY_ASSOCIATION_ID_SESSION_FK = "idSession";
     private static final String KEY_ASSOCIATION_ID_DEVICE_FK = "idDevice";
     private static final String KEY_ASSOCIATION_ID_LOCATION_FK = "idLocation";
@@ -95,7 +96,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 "(" +
                 KEY_DEVICE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_DEVICE_SSID + " TEXT," +
-                KEY_DEVICE_BSSID + " TEXT," +
+                KEY_DEVICE_BSSID + " TEXT UNIQUE," +        //MAC ADDRESS
                 KEY_DEVICE_CHARACTERISTICS + " TEXT," +
                 KEY_DEVICE_TYPE + " TEXT" +
                 ")";
@@ -104,12 +105,11 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 "(" +
                 KEY_LOCATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_LOCATION_DATE + " TEXT," +
-                KEY_LOCATION_COORDINATES + " TEXT" +
+                KEY_LOCATION_COORDINATES + " TEXT UNIQUE" +     //ONE LOCATION ONLY
                 ")";
 
         String CREATE_ASSOCIATION_TABLE = "CREATE TABLE " + TABLE_ASOCSESSIONSDEVICES +
                 "(" +
-                KEY_ASSOCIATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 KEY_ASSOCIATION_ID_SESSION_FK + " INTEGER REFERENCES " + TABLE_SESSIONS + "," +
                 KEY_ASSOCIATION_ID_DEVICE_FK + " INTEGER REFERENCES " + TABLE_DEVICES + "," +
                 KEY_ASSOCIATION_ID_LOCATION_FK + " INTEGER REFERENCES " + TABLE_LOCATIONS +
@@ -122,7 +122,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     }
 
     /*
-     * Called when the database needs to be upgraded (the database already
+     * Called when the database needs to be upgraded (i.e. the database already
      * exists and the version is different from the version of the database that
      * exists in memory).
      */
@@ -148,7 +148,9 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_SESSION_STARTDATE, session.getStartDate());
             values.put(KEY_SESSION_ENDDATE, session.getEndDate());
 
-            db.insertOrThrow(TABLE_SESSIONS, null, values);
+            long rowId = db.insertOrThrow(TABLE_SESSIONS, null, values);
+            if(rowId > sessionId)           // 0 > -1
+                sessionId = rowId;
             db.setTransactionSuccessful();
         }catch(Exception e){
             Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
@@ -168,7 +170,12 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_DEVICE_CHARACTERISTICS, device.getCharacteristics());
             values.put(KEY_DEVICE_TYPE, device.getType().toString());
 
-            db.insertOrThrow(TABLE_DEVICES, null, values);
+            long rowId = db.insertOrThrow(TABLE_DEVICES, null, values);
+            if(rowId > deviceId)            // 0 > -1
+                deviceId = rowId;
+            else{                           // Error: Location already exists in DB
+
+            }
             db.setTransactionSuccessful();
         }catch(Exception e){
             Log.d("ADD DEVICE TO DB", "ERROR WHILE ADDING A DEVICE TO DB");
@@ -186,7 +193,10 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_LOCATION_DATE, location.getDate());
             values.put(KEY_LOCATION_COORDINATES, location.getCoordinatesString());
 
-            db.insertOrThrow(TABLE_LOCATIONS, null, values);
+            long rowId = db.insertOrThrow(TABLE_LOCATIONS, null, values);
+            if(rowId > locationId)           // 0 > -1
+                locationId = rowId;
+            db.setTransactionSuccessful();
         }catch(Exception e){
             Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
         }finally {
@@ -194,5 +204,21 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // TODO: Querying records, review association table
+    public void addAssociation(){
+        SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try{
+            ContentValues values = new ContentValues();
+            values.put(KEY_ASSOCIATION_ID_SESSION_FK, sessionId);
+            values.put(KEY_ASSOCIATION_ID_DEVICE_FK, deviceId);
+            values.put(KEY_ASSOCIATION_ID_LOCATION_FK, locationId);
+
+            db.setTransactionSuccessful();
+        }catch(Exception e){
+            Log.d("ADD ASSOCIATION TO DB", "ERROR WHILE ADDING AN ASSOCIATION TO DB");
+        }finally {
+            db.endTransaction();
+        }
+    }
 }
