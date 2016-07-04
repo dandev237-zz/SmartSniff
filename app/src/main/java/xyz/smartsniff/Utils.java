@@ -1,6 +1,5 @@
 package xyz.smartsniff;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -12,7 +11,7 @@ import java.util.Date;
  */
 public class Utils {
 
-    private static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    private static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
     /**
      * Given a date, this function returns the date with the format "dd/MM/yyyy HH:mm:ss"
@@ -20,7 +19,9 @@ public class Utils {
      * @return      The date, formatted.
      */
     public static String formatDate(Date date){
-        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-        return formatter.format(date);
+        android.text.format.DateFormat df = new android.text.format.DateFormat();
+        String formattedDate = df.format(DATE_FORMAT, date).toString();
+
+        return formattedDate;
     }
 }

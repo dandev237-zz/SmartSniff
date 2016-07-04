@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -34,6 +35,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver{
     private Runnable scanRunnable = new Runnable() {
         @Override
         public void run() {
+            Log.d("SCANRUNNABLE", "ENTERED SCANRUNNABLE");
             initiateScan();
         }
     };
@@ -53,7 +55,7 @@ public class CustomBroadcastReceiver extends BroadcastReceiver{
         checkListener(listener);
         checkInterval(interval);
 
-        this.context = context.getApplicationContext();
+        this.context = context;
         scanResultsListener = listener;
         scanInterval = interval;
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
@@ -83,12 +85,14 @@ public class CustomBroadcastReceiver extends BroadcastReceiver{
 
         if(continueScanning){
             initiateScan();
-            scanResultsListener.onScanResultsReceived(wifiManager.getScanResults());
+            if(!wifiManager.getScanResults().isEmpty())
+                scanResultsListener.onScanResultsReceived(wifiManager.getScanResults());
         }
     }
 
     private void initiateScan(){
         long scanTime = System.currentTimeMillis();
+        Log.d("SCANTIME", "Scan time: " + scanTime);
 
         if(continueScanning){
             long delay = scanTime - lastScanTime;
@@ -97,7 +101,6 @@ public class CustomBroadcastReceiver extends BroadcastReceiver{
                 wifiManager.startScan();
                 lastScanTime = scanTime;
             } else {
-                //Send the results when the appropriate time comes
                 scanHandler.removeCallbacks(scanRunnable);
                 scanHandler.postDelayed(scanRunnable, scanInterval - delay);
             }
@@ -117,36 +120,36 @@ public class CustomBroadcastReceiver extends BroadcastReceiver{
 
     /**
      * Method to initiate a WiFi scan.
-     * @param releaseResultsImmediately whether or not to release ScanResults immediately from the last scan
      */
-    public void startScan(boolean releaseResultsImmediately){
+    public void startScan(){
         if(continueScanning){
             Log.d("CustomBroadcastReceiver", "A SCAN IS ALREADY IN PROGRESS");
             return;
         }
         context.registerReceiver(this, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         continueScanning = true;
-        wifiManager.startScan();
+        //wifiManager.startScan();
+        initiateScan();
         lastScanTime = System.currentTimeMillis();
-        if(releaseResultsImmediately)
-            scanResultsListener.onScanResultsReceived(wifiManager.getScanResults());
     }
 
     /**
      * Method to stop an initiated scan.
      */
-    public void stopScan(){
+    public List<ScanResult> stopScan(){
         if(continueScanning){
             scanHandler.removeCallbacks(scanRunnable);
             continueScanning = false;
             context.unregisterReceiver(this);
         }
+
+        return wifiManager.getScanResults();
     }
 
     /**
      * ScanResults delivery
      */
     public interface ScanResultsListener{
-        void onScanResultsReceived(List results);
+        void onScanResultsReceived(List<ScanResult> results);
     }
 }

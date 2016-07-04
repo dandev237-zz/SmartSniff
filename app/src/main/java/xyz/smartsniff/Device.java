@@ -19,6 +19,27 @@ public class Device {
         this.type = type;
     }
 
+    /**
+     * Two devices are the same device if and only if their MAC addresses are equal
+     * @param other the device to be compared to this device.
+     * @return  whether or not both devices are equal.
+     */
+    @Override
+    public boolean equals(Object other){
+        boolean isEqual = false;
+        if (other instanceof Device && this.getBssid().equals(((Device) other).getBssid()))
+            isEqual = true;
+
+        return isEqual;
+    }
+
+    @Override
+    public int hashCode(){
+        int hash = getBssid().hashCode();
+        return hash;
+    }
+
+
     public String getSsid() {
         return ssid;
     }

@@ -28,10 +28,6 @@ public class Location {
         locatedDevices.add(device);
     }
 
-    public LinkedList<Device> getLocatedDevices() {
-        return locatedDevices;
-    }
-
     public String getDate() {
         return date;
     }
@@ -50,5 +46,13 @@ public class Location {
 
     public void setCoordinates(LatLng coordinates) {
         this.coordinates = coordinates;
+    }
+
+    public LinkedList<Device> getLocatedDevices() {
+        return locatedDevices;
+    }
+
+    public void setLocatedDevices(LinkedList<Device> locatedDevices) {
+        this.locatedDevices = locatedDevices;
     }
 }
