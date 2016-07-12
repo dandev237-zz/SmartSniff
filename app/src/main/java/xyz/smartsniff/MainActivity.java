@@ -225,21 +225,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<ScanResult> scanResultList = wifiManager.getScanResults();
 
             //For each scan result, create a Device and add it to the Location devices list
+            //If the user hasn't moved, any devices already discovered on that location won't be registered again
             for (ScanResult s : scanResultList) {
-                Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
+                Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI, getApplicationContext());
                 if (!location.getLocatedDevices().contains(device)) {
+                    //If the device is new for this location, get his manufacturer
+                    device.getManufacturerFromBssid(device.getBssid());
                     location.addFoundDevice(device);
                     sessionResults++;
                     //Log.d("NEW DEVICE FOUND", "New device found!!");
-                } else {
-                    //Log.d("SAME DEVICE DISCOVERED", "I've seen a device already recorded!");
-                }
+                } /*else {
+                    Log.d("SAME DEVICE DISCOVERED", "I've seen a device already recorded!");
+                }*/
             }
 
             /*for(Device d : location.getLocatedDevices()){
-                Log.d("FOUND DEVICE", d.toString());
-            }*/
-            //Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());
+                Log.d("FOUND DEVICE", d.getBssid());
+            }
+            Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());*/
             lastKnownLocation = location;
         }
     }

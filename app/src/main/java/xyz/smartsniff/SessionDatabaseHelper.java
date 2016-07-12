@@ -39,6 +39,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_DEVICE_ID = "id";
     private static final String KEY_DEVICE_SSID = "ssid";
     private static final String KEY_DEVICE_BSSID = "bssid";
+    private static final String KEY_DEVICE_MANUFACTURER = "manufacturer";
     private static final String KEY_DEVICE_CHARACTERISTICS = "characteristics";
     private static final String KEY_DEVICE_TYPE = "type";
 
@@ -97,6 +98,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 KEY_DEVICE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 KEY_DEVICE_SSID + " TEXT," +
                 KEY_DEVICE_BSSID + " TEXT UNIQUE," +        //MAC ADDRESS
+                KEY_DEVICE_MANUFACTURER + " TEXT, " +
                 KEY_DEVICE_CHARACTERISTICS + " TEXT," +
                 KEY_DEVICE_TYPE + " TEXT" +
                 ")";
