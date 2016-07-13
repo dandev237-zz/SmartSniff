@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -16,7 +17,7 @@ import java.util.Date;
  */
 public class Utils {
 
-    private static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
+    private static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
     private static final int PERMISSIONS_REQUEST = 1111;
 
     /**
@@ -25,22 +26,9 @@ public class Utils {
      * @return      The date, formatted.
      */
     public static String formatDate(Date date){
-        android.text.format.DateFormat df = new android.text.format.DateFormat();
-        String formattedDate = df.format(DATE_FORMAT, date).toString();
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        String formattedDate = dateFormat.format(date);
 
         return formattedDate;
-    }
-
-    public static void handlePermissions(Context context, Activity activity) {
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, android.Manifest
-                .permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-
-            ActivityCompat.requestPermissions(activity, new String[]{android.Manifest.permission
-                    .ACCESS_FINE_LOCATION,
-                    android.Manifest.permission
-                            .ACCESS_COARSE_LOCATION}, PERMISSIONS_REQUEST);
-        }
     }
 }

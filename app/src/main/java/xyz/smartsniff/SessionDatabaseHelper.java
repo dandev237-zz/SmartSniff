@@ -2,6 +2,8 @@ package xyz.smartsniff;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -154,7 +156,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             if(rowId > sessionId)           // 0 > -1
                 sessionId = rowId;
             db.setTransactionSuccessful();
-        }catch(Exception e){
+        }catch(SQLException e){
             Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
         }finally {
             db.endTransaction();
@@ -169,18 +171,28 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             ContentValues values = new ContentValues();
             values.put(KEY_DEVICE_SSID, device.getSsid());
             values.put(KEY_DEVICE_BSSID, device.getBssid());
+            values.put(KEY_DEVICE_MANUFACTURER, device.getManufacturer());
             values.put(KEY_DEVICE_CHARACTERISTICS, device.getCharacteristics());
             values.put(KEY_DEVICE_TYPE, device.getType().toString());
+
 
             long rowId = db.insertOrThrow(TABLE_DEVICES, null, values);
             if(rowId > deviceId)            // 0 > -1
                 deviceId = rowId;
-            else{                           // Error: Location already exists in DB
-
-            }
             db.setTransactionSuccessful();
-        }catch(Exception e){
+        }catch(SQLException e){
             Log.d("ADD DEVICE TO DB", "ERROR WHILE ADDING A DEVICE TO DB");
+            //The error is caused because the device already exists in the database.
+            //We need to get the ID of such device.
+            String[] fields = new String[]{KEY_DEVICE_ID};
+            String[] args = new String[]{device.getBssid()};
+
+            Cursor c = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
+            //Check if there is at least one result
+            if(c.moveToFirst()){
+                deviceId = c.getInt(0);
+                Log.d("ADD DEVICE TO DB", "EXISTING DEVICE ID FOUND: " + deviceId);
+            }
         }finally {
             db.endTransaction();
         }
@@ -199,7 +211,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             if(rowId > locationId)           // 0 > -1
                 locationId = rowId;
             db.setTransactionSuccessful();
-        }catch(Exception e){
+        }catch(SQLException e){
             Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
         }finally {
             db.endTransaction();

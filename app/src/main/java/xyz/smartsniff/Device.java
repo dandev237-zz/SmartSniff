@@ -123,5 +123,13 @@ public class Device {
     public void setType(DeviceType type) {
         this.type = type;
     }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
 }
 

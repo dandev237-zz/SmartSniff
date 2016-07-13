@@ -1,17 +1,11 @@
 package xyz.smartsniff;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.location.Criteria;
-import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -25,14 +19,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -52,10 +48,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
 
+    private SessionDatabaseHelper databaseHelper;
     private WifiManager wifiManager;
     private CustomReceiver receiver;
     private GeolocationGPS geoGPS;
-    private android.location.Location location;
+    private LinkedList<Location> locationList;
 
     private Date startDate, endDate;
     private int sessionResults;
@@ -78,8 +75,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         initDateTextView = (TextView) findViewById(R.id.initDateTextView);
         scanLayout.setVisibility(View.INVISIBLE);
 
+        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         geoGPS = new GeolocationGPS(getApplicationContext(), this);
+        locationList = new LinkedList<>();
         sessionResults = 0;
 
         receiver = new CustomReceiver();
@@ -91,17 +91,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (isChecked) {
                     //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: CHECKED");
                     scanLayout.setVisibility(View.VISIBLE);
-                    //Permissions check at runtime
-                    Utils.handlePermissions(getApplicationContext(), MainActivity.this);
+                    discoveriesTextView.setText(String.valueOf(sessionResults));
+
+                    geoGPS.connect();
+                    startDate = new Date();
+                    initDateTextView.setText(Utils.formatDate(startDate));
 
                     //Scanning procedure
                     beginScanningProcedure();
                 } else {
-                    //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
+                    geoGPS.disconnect();
+                    endDate = new Date();
 
+                    Session session = new Session(startDate, endDate);
+                    databaseHelper.addSession(session);
+                    for(Location loc : locationList){
+                        databaseHelper.addLocation(loc);
+                        for(Device dev : loc.getLocatedDevices()){
+                            databaseHelper.addDevice(dev);
+                            databaseHelper.addAssociation();
+                        }
+                    }
+
+                    //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
+                    //Log.d("Scan Button", "SESSION ENDED. START DATE: " + startDate + ", END DATE: " + endDate);
                     scanLayout.setVisibility(View.INVISIBLE);
+
                     Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
-                            ".", Toast.LENGTH_LONG).show();
+                            ".", Toast.LENGTH_SHORT).show();
+
+                    sessionResults = 0;
                 }
             }
         });
@@ -112,8 +131,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             long lastScanTime = 0;
 
             public void run() {
-                startDate = new Date();
-                geoGPS.connect();
                 try {
                     //The scan will begin after an interval of time
                     //Log.d("SCANNING THREAD", "SLEEP");
@@ -134,10 +151,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         lastScanTime = scanTime;
                     }
                 }
-
                 unregisterReceiver(receiver);
-                geoGPS.disconnect();
-                endDate = new Date();
             }
         };
         scanningThread.start();
@@ -233,6 +247,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     device.getManufacturerFromBssid(device.getBssid());
                     location.addFoundDevice(device);
                     sessionResults++;
+                    discoveriesTextView.setText(String.valueOf(sessionResults));
                     //Log.d("NEW DEVICE FOUND", "New device found!!");
                 } /*else {
                     Log.d("SAME DEVICE DISCOVERED", "I've seen a device already recorded!");
@@ -243,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Log.d("FOUND DEVICE", d.getBssid());
             }
             Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());*/
+            locationList.add(location);
             lastKnownLocation = location;
         }
     }

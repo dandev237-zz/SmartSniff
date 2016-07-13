@@ -6,8 +6,8 @@ android {
 
     defaultConfig {
         applicationId "xyz.smartsniff"
-        minSdkVersion 23
-        targetSdkVersion 24
+        minSdkVersion 20
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
     }

@@ -39,8 +39,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
 
     private static final String TAG = "GeolocationGPS";
-    private static final int PERMISSION_REQUEST_FINE = 1111;
-    private static final int REQUEST_CHECK_SETTINGS = 1112;
+    private static final int REQUEST_CHECK_SETTINGS = 1113;
 
     private GoogleApiClient googleApiClient;
     private Context appContext;
@@ -115,17 +114,8 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
         });
     }
 
-    protected void startLocationUpdates() {
+    protected void startLocationUpdates() throws SecurityException {
         //Permissions check at runtime
-        if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(appContext, Manifest
-                .permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(mainActivity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission
-                            .ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_FINE);
-        }
-
         createLocationRequest();
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
@@ -168,6 +158,5 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
     public double getLongitude() {
         return longitude;
     }
-
 
 }
