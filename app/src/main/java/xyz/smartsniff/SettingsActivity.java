@@ -6,8 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -42,6 +40,16 @@ public class SettingsActivity extends AppCompatActivity {
 
         preferences = getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
 
+        loadUserSettings();
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+        saveUserSettings();
+    }
+
+    private void loadUserSettings() {
         energySavingCheckBox = (CheckBox) findViewById(R.id.energySavingCheckBox);
         energyPref = preferences.getInt(Utils.PREF_GPS_PRIORITY, Utils.GPS_PRIORITY_DEFAULT);
         if(energyPref == LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY){
@@ -54,13 +62,6 @@ public class SettingsActivity extends AppCompatActivity {
         scanIntervalPref = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
         scanIntervalPref /= 1000;
         intervalEditText.setText(String.valueOf(scanIntervalPref));
-    }
-
-    @Override
-    protected void onStop(){
-        super.onStop();
-
-        saveUserSettings();
     }
 
     private void saveUserSettings() {
@@ -79,9 +80,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private final TextWatcher intervalWatcher = new TextWatcher() {
         @Override
-        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-        }
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
         @Override
         public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -97,8 +96,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         @Override
-        public void afterTextChanged(Editable editable) {
-        }
+        public void afterTextChanged(Editable editable) {}
     };
 
     public boolean isEnergySavingMode() {

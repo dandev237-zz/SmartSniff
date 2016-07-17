@@ -235,4 +235,6 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             db.endTransaction();
         }
     }
+
+
 }
