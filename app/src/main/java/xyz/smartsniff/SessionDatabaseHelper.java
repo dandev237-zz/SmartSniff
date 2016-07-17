@@ -7,6 +7,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * This class handles database operations such as reading, writing and upgrading.
@@ -228,13 +229,32 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_ASSOCIATION_ID_DEVICE_FK, deviceId);
             values.put(KEY_ASSOCIATION_ID_LOCATION_FK, locationId);
 
+            db.insertOrThrow(TABLE_ASOCSESSIONSDEVICES, null, values);
             db.setTransactionSuccessful();
-        }catch(Exception e){
+        }catch(SQLException e){
             Log.d("ADD ASSOCIATION TO DB", "ERROR WHILE ADDING AN ASSOCIATION TO DB");
         }finally {
             db.endTransaction();
         }
     }
 
+    public void deleteDatabase(Context applicationContext){
+        SQLiteDatabase db = getWritableDatabase();
 
+        db.beginTransaction();
+        try{
+            db.delete(TABLE_ASOCSESSIONSDEVICES, null, null);
+            db.delete(TABLE_SESSIONS, null, null);
+            db.delete(TABLE_LOCATIONS, null, null);
+            db.delete(TABLE_DEVICES, null, null);
+
+            db.setTransactionSuccessful();
+            Toast.makeText(applicationContext, "Datos borrados satisfactoriamente", Toast.LENGTH_SHORT)
+                    .show();
+        }catch(SQLException e){
+            Log.d("DELETE DATA FROM DB", "ERROR WHILE DELETING DATA FROM DB");
+        }finally{
+            db.endTransaction();
+        }
+    }
 }

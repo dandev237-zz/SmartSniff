@@ -2,13 +2,16 @@ package xyz.smartsniff;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -20,7 +23,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -189,7 +191,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
-            return true;
+            showDeleteAlertDialog();
         }
 
         if (id == R.id.action_send_data) {
@@ -201,10 +203,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d("AppBar Configuration", "APPBAR: CONFIGURATION BUTTON PRESSED");
             Intent settingsIntent = new Intent(this, SettingsActivity.class);
             startActivity(settingsIntent);
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showDeleteAlertDialog() {
+        //Build first alert dialog
+        AlertDialog.Builder builderFirst = new AlertDialog.Builder(new ContextThemeWrapper(this, R.style.alertDialog));
+        builderFirst.setMessage(getString(R.string.delete_alert_dialog_message))
+                .setTitle(R.string.delete_alert_dialog_title)
+                .setPositiveButton(R.string.delete_alert_dialog_possitive_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        //Delete all database records
+                        databaseHelper.deleteDatabase(getApplicationContext());
+                    }
+                })
+                .setNegativeButton(R.string.delete_alert_dialog_negative_button, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        //Leave empty
+                    }
+                });
+
+        AlertDialog dialog = builderFirst.create();
+        dialog.show();
     }
     //----------------------------------------------------------------------------------------------------------------------
 

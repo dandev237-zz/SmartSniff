@@ -27,10 +27,11 @@ public class SettingsActivity extends AppCompatActivity {
     private static final int MAXIMUM_INTERVAL_SCAN_VALUE_INT = 10;
 
     private SharedPreferences preferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener prefChangeListener;
     private CheckBox energySavingCheckBox;
     private EditText intervalEditText;
 
-    private boolean energySavingMode;
+    private boolean energySavingMode, preferencesChanged;
     private int energyPref, scanIntervalPref;
 
     @Override
@@ -39,6 +40,14 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         preferences = getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
+        prefChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener(){
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                preferencesChanged = true;
+            }
+        };
+        preferences.registerOnSharedPreferenceChangeListener(prefChangeListener);
+        preferencesChanged = false;
 
         loadUserSettings();
     }
@@ -47,6 +56,7 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onStop(){
         super.onStop();
         saveUserSettings();
+        preferences.unregisterOnSharedPreferenceChangeListener(prefChangeListener);
     }
 
     private void loadUserSettings() {
@@ -75,7 +85,8 @@ public class SettingsActivity extends AppCompatActivity {
         preferences.edit().putInt(Utils.PREF_GPS_PRIORITY, energyPref)
                 .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
 
-        Toast.makeText(getApplicationContext(), "Configuración guardada con éxito.", Toast.LENGTH_SHORT).show();
+        if(preferencesChanged)
+            Toast.makeText(getApplicationContext(), "Configuración guardada con éxito.", Toast.LENGTH_SHORT).show();
     }
 
     private final TextWatcher intervalWatcher = new TextWatcher() {

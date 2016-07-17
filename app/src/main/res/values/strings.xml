@@ -75,4 +75,9 @@
         10 segundos)</string>
     <string name="default_configuration">Configuración por defecto</string>
     <string name="save_configuration">Guardar</string>
+    <string name="delete_alert_dialog_message">Va a eliminar todos los datos de la base de datos interna del dispositivo.
+        Esta operación no se puede deshacer. ¿Está seguro de querer proceder?</string>
+    <string name="delete_alert_dialog_title">Alerta - Eliminación de datos</string>
+    <string name="delete_alert_dialog_possitive_button">Sí, borrar los datos</string>
+    <string name="delete_alert_dialog_negative_button">No, cancelar</string>
 </resources>
