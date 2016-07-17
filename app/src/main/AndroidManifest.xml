@@ -24,7 +24,10 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCzEdZ0srzdLX94Hw3lzyKrEil9CBR7Th8" />
+            android:value="AIzaSyCzEdZ0srzdLX94Hw3lzyKrEil9CBR7Th8"/>
+
+        <activity android:name=".SettingsActivity">
+        </activity>
     </application>
 
 </manifest>

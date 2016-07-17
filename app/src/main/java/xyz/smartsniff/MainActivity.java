@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.support.v7.app.AppCompatActivity;
@@ -19,14 +20,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,16 +53,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private CustomReceiver receiver;
     private GeolocationGPS geoGPS;
     private LinkedList<Location> locationList;
+    private SharedPreferences preferences;
 
     private Date startDate, endDate;
     private int sessionResults;
-    private long interval = 3000; //millis
     private Thread scanningThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        preferences = getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
 
         appBar = (Toolbar) findViewById(R.id.app_toolbar);
         setSupportActionBar(appBar);
@@ -129,6 +131,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void beginScanningProcedure() {
         scanningThread = new Thread() {
             long lastScanTime = 0;
+            int interval = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
 
             public void run() {
                 try {
@@ -196,6 +199,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (id == R.id.action_settings) {
             Log.d("AppBar Configuration", "APPBAR: CONFIGURATION BUTTON PRESSED");
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
             return true;
         }
 

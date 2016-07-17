@@ -1,15 +1,13 @@
 package xyz.smartsniff;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.IntentSender;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -46,6 +44,7 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
     private Activity mainActivity;
     private LocationRequest locationRequest;
     private LocationSettingsRequest.Builder builder;
+    private SharedPreferences preferences;
 
     private double latitude, longitude;
     private boolean requestingLocationUpdates;
@@ -55,6 +54,8 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
 
         this.appContext = appContext;
         this.mainActivity = mainActivity;
+
+        preferences = appContext.getSharedPreferences(Utils.PREFS_NAME, appContext.MODE_PRIVATE);
 
         googleApiClient = new GoogleApiClient.Builder(appContext)
                 .addConnectionCallbacks(this)
@@ -79,9 +80,11 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
 
     protected void createLocationRequest() {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(3000);          //THE SAME AS THE SCAN INTERVAL
-        locationRequest.setFastestInterval(2000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY); // Wifi-Internet
+        int scanInterval = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
+        locationRequest.setInterval(scanInterval);
+        locationRequest.setFastestInterval(scanInterval - 1000);
+        // Wifi-Internet by default
+        locationRequest.setPriority(preferences.getInt(Utils.PREF_GPS_PRIORITY, Utils.GPS_PRIORITY_DEFAULT));
 
         builder.addLocationRequest(locationRequest);
         PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient,
