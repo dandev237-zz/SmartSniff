@@ -31,7 +31,6 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private CheckBox energySavingCheckBox;
     private EditText intervalEditText;
-    private Button defaultConfigurationButton, saveConfigurationButton;
 
     private boolean energySavingMode;
     private int energyPref, scanIntervalPref;
@@ -55,41 +54,27 @@ public class SettingsActivity extends AppCompatActivity {
         scanIntervalPref = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
         scanIntervalPref /= 1000;
         intervalEditText.setText(String.valueOf(scanIntervalPref));
+    }
 
-        defaultConfigurationButton = (Button) findViewById(R.id.defaultConfigurationButton);
-        defaultConfigurationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setEnergySavingMode(false);
-                energySavingCheckBox.setChecked(energySavingMode);
+    @Override
+    protected void onStop(){
+        super.onStop();
 
-                setScanInterval(Utils.SCAN_INTERVAL_DEFAULT/1000);
-                intervalEditText.setText(String.valueOf(getScanInterval()));
+        saveUserSettings();
+    }
 
-                preferences.edit().putInt(Utils.PREF_GPS_PRIORITY, LocationRequest.PRIORITY_HIGH_ACCURACY)
-                        .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
+    private void saveUserSettings() {
+        setEnergySavingMode(energySavingCheckBox.isChecked());
+        if(isEnergySavingMode())
+            energyPref = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
+        else
+            energyPref = LocationRequest.PRIORITY_HIGH_ACCURACY;
 
-                Toast.makeText(getApplicationContext(), "Configuración por defecto cargada.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        setScanInterval(Integer.parseInt(intervalEditText.getText().toString()));
+        preferences.edit().putInt(Utils.PREF_GPS_PRIORITY, energyPref)
+                .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
 
-        saveConfigurationButton = (Button) findViewById(R.id.saveConfigurationButton);
-        saveConfigurationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                setEnergySavingMode(energySavingCheckBox.isChecked());
-                if(isEnergySavingMode())
-                    energyPref = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
-                else
-                    energyPref = LocationRequest.PRIORITY_HIGH_ACCURACY;
-
-                setScanInterval(Integer.parseInt(intervalEditText.getText().toString()));
-                preferences.edit().putInt(Utils.PREF_GPS_PRIORITY, energyPref)
-                        .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
-
-                Toast.makeText(getApplicationContext(), "Configuración guardada con éxito.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        Toast.makeText(getApplicationContext(), "Configuración guardada con éxito.", Toast.LENGTH_SHORT).show();
     }
 
     private final TextWatcher intervalWatcher = new TextWatcher() {

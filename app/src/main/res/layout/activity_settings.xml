@@ -21,7 +21,8 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/action_settings"
             android:id="@+id/optionsText"
-            android:textColor="@color/abc_primary_text_material_light"/>
+            android:textColor="@color/abc_primary_text_material_light"
+            android:textStyle="bold"/>
 
     </TableRow>
 
@@ -125,31 +126,5 @@
         android:background="#000000"
         android:layout_marginBottom="15dp"
         android:layout_marginTop="15dp"/>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_horizontal">
-
-        <Button
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/default_configuration"
-            android:id="@+id/defaultConfigurationButton"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentStart="true"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/save_configuration"
-            android:id="@+id/saveConfigurationButton"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"/>
-    </RelativeLayout>
 
 </LinearLayout>
