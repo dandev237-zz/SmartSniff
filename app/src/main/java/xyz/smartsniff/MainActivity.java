@@ -23,12 +23,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
+import com.google.maps.android.heatmaps.WeightedLatLng;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,8 +49,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
 
+    private static final float ZOOM_LEVEL = 17.0f;
+    private static final double HEATMAP_OPACITY = 0.6;
+    private static final int HEATMAP_RADIUS = 40;
+
     private Toolbar appBar;
     private MapFragment mapFragment;
+    private GoogleMap googleMap;
     private TableLayout scanLayout;
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
@@ -162,6 +172,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         scanningThread.start();
     }
 
+    private void addHeatMap(LatLng location, int numOfDevices){
+        WeightedLatLng locationLatLng = new WeightedLatLng(location, numOfDevices * 1.0);
+        ArrayList<WeightedLatLng> data = new ArrayList<>();
+        data.add(locationLatLng);
+
+        HeatmapTileProvider provider = new HeatmapTileProvider.Builder().weightedData(data)
+                .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+
+        TileOverlay overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -236,7 +258,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //----------------------------------------------------------------------------------------------------------------------
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        googleMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("MarkerTest"));
+        this.googleMap = googleMap;
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -288,6 +310,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());*/
             locationList.add(location);
+            addHeatMap(location.getCoordinates(), location.getNumOfLocatedDevices());
+            //CAMERA AND VIEW DOCUMENTATION
+            //https://developers.google.com/maps/documentation/android-api/views
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
             lastKnownLocation = location;
         }
     }

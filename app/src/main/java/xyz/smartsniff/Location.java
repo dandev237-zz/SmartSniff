@@ -52,6 +52,10 @@ public class Location {
         return locatedDevices;
     }
 
+    public int getNumOfLocatedDevices() {
+        return locatedDevices.size();
+    }
+
     public void setLocatedDevices(LinkedList<Device> locatedDevices) {
         this.locatedDevices = locatedDevices;
     }
