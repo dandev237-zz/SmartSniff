@@ -69,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private Date startDate, endDate;
     private int sessionResults;
-    private Thread scanningThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if (isChecked) {
-                    //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: CHECKED");
                     scanLayout.setVisibility(View.VISIBLE);
                     discoveriesTextView.setText(String.valueOf(sessionResults));
 
@@ -111,28 +109,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     startDate = new Date();
                     initDateTextView.setText(Utils.formatDate(startDate));
 
-                    //Scanning procedure
                     beginScanningProcedure();
                 } else {
+                    scanLayout.setVisibility(View.INVISIBLE);
                     geoGPS.disconnect();
                     endDate = new Date();
 
-                    Session session = new Session(startDate, endDate);
-                    databaseHelper.addSession(session);
-                    for(Location loc : locationList){
-                        databaseHelper.addLocation(loc);
-                        for(Device dev : loc.getLocatedDevices()){
-                            databaseHelper.addDevice(dev);
-                            databaseHelper.addAssociation();
-                        }
-                    }
-
-                    //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
-                    //Log.d("Scan Button", "SESSION ENDED. START DATE: " + startDate + ", END DATE: " + endDate);
-                    scanLayout.setVisibility(View.INVISIBLE);
-
-                    Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
-                            ".", Toast.LENGTH_SHORT).show();
+                    storeData();
 
                     sessionResults = 0;
                 }
@@ -141,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void beginScanningProcedure() {
-        scanningThread = new Thread() {
+        Thread scanningThread = new Thread() {
             long lastScanTime = 0;
             int interval = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
 
@@ -170,6 +153,30 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
         scanningThread.start();
+    }
+
+    private void storeData() {
+        Thread storeThread = new Thread(){
+            public void run(){
+                Session session = new Session(startDate, endDate);
+                databaseHelper.addSession(session);
+                for(Location loc : locationList){
+                    databaseHelper.addLocation(loc);
+                    for(Device dev : loc.getLocatedDevices()){
+                        databaseHelper.addDevice(dev);
+                        databaseHelper.addAssociation();
+                    }
+                }
+
+                //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
+                //Log.d("Scan Button", "SESSION ENDED. START DATE: " + startDate + ", END DATE: " + endDate);
+
+                Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
+                        ".", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        storeThread.run();
     }
 
     private void addHeatMap(LatLng location, int numOfDevices){
