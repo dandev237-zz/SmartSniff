@@ -40,7 +40,6 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
     private static final int REQUEST_CHECK_SETTINGS = 1113;
 
     private GoogleApiClient googleApiClient;
-    private Context appContext;
     private Activity mainActivity;
     private LocationRequest locationRequest;
     private LocationSettingsRequest.Builder builder;
@@ -52,10 +51,9 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
 
     public GeolocationGPS(Context appContext, Activity mainActivity) {
 
-        this.appContext = appContext;
         this.mainActivity = mainActivity;
 
-        preferences = appContext.getSharedPreferences(Utils.PREFS_NAME, appContext.MODE_PRIVATE);
+        preferences = appContext.getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
 
         googleApiClient = new GoogleApiClient.Builder(appContext)
                 .addConnectionCallbacks(this)
@@ -66,7 +64,7 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
         requestingLocationUpdates = true;
     }
 
-    public void connect() {
+        public void connect() {
         googleApiClient.connect();
     }
 

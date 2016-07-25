@@ -23,16 +23,8 @@ public class Session {
         return startDate;
     }
 
-    public void setStartDate(Date startDate) {
-        this.startDate = Utils.formatDate(startDate);
-    }
-
     public String getEndDate() {
         return endDate;
-    }
-
-    public void setEndDate(Date endDate) {
-        this.endDate = Utils.formatDate(endDate);
     }
 
     @Override

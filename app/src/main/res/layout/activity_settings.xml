@@ -20,7 +20,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/action_settings"
-            android:id="@+id/optionsText"
             android:textColor="@color/abc_primary_text_material_light"
             android:textStyle="bold"/>
 
@@ -41,7 +40,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/energy_saving_text"
-            android:id="@+id/energySavingText"
             android:textColor="@color/abc_primary_text_material_light"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"/>
@@ -63,7 +61,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/energy_saving_explanation"
-            android:id="@+id/energySavingExplanationText"
             android:gravity="fill_horizontal"/>
 
     </RelativeLayout>
@@ -116,7 +113,6 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/interval_explanation"
-            android:id="@+id/textView2"
             android:gravity="fill_horizontal"/>
     </RelativeLayout>
 

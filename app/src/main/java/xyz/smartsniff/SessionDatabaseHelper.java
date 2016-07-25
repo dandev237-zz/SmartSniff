@@ -6,8 +6,13 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.ArrayMap;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.gms.maps.model.LatLng;
+
+import java.util.Map;
 
 /**
  * This class handles database operations such as reading, writing and upgrading.
@@ -256,5 +261,45 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         }finally{
             db.endTransaction();
         }
+    }
+
+    /**
+     * Returns all the locations stored in the internal database and the number
+     * of devices found on each of them.
+     * @return locationMap A Map with the data mentioned above
+     */
+    public Map<Location, Integer> selectLocationsForHeatmap(){
+        Map<Location, Integer> locationMap = new ArrayMap<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_LOCATIONS;
+            Cursor cursor = db.rawQuery(selectQuery, null);
+
+            if(cursor.moveToFirst()){
+                do {
+                    String[] latlong =  cursor.getString(2).split(", ");
+                    double latitude = Double.parseDouble(latlong[0]);
+                    double longitude = Double.parseDouble(latlong[1]);
+                    Location location = new Location(new LatLng(latitude, longitude));
+
+                    String countQuery = "SELECT count(*) FROM " + TABLE_ASOCSESSIONSDEVICES
+                            + " WHERE " + KEY_ASSOCIATION_ID_LOCATION_FK + " = "
+                            + cursor.getInt(0);
+                    Cursor countCursor = db.rawQuery(countQuery, null);
+                    if(countCursor.moveToFirst())
+                        locationMap.put(location, countCursor.getInt(0));
+                }while(cursor.moveToNext());
+            }
+
+            db.setTransactionSuccessful();
+        }catch(SQLException e){
+            Log.d("selectLocationsHeatmap", "ERROR WHILE GETTING LOCATIONS FOR HEATMAP");
+        }finally{
+            db.endTransaction();
+        }
+
+        return locationMap;
     }
 }

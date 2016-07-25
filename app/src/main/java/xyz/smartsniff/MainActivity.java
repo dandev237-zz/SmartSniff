@@ -27,6 +27,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main activity of the application. Contains the scanning interface and the
@@ -54,11 +56,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final int HEATMAP_RADIUS = 40;
 
     private Toolbar appBar;
-    private MapFragment mapFragment;
-    private GoogleMap googleMap;
     private TableLayout scanLayout;
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
+
+    private MapFragment mapFragment;
+    private GoogleMap googleMap;
+    private HeatmapTileProvider provider;
+    private TileOverlay overlay;
 
     private SessionDatabaseHelper databaseHelper;
     private WifiManager wifiManager;
@@ -171,6 +176,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
                 //Log.d("Scan Button", "SESSION ENDED. START DATE: " + startDate + ", END DATE: " + endDate);
 
+                //addPointsToHeatMap(locationList);
+                reloadHeatMapPoints(false);
+
                 Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
                         ".", Toast.LENGTH_SHORT).show();
             }
@@ -179,26 +187,60 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         storeThread.run();
     }
 
-    private void addHeatMap(LatLng location, int numOfDevices){
-        WeightedLatLng locationLatLng = new WeightedLatLng(location, numOfDevices * 1.0);
+    //Used after a scan
+    private void addSinglePointToHeatMap(final Location locationToAdd) {
+        Thread addPointThread = new Thread(){
+            public void run(){
+                ArrayList<WeightedLatLng> data = new ArrayList<>();
+
+                WeightedLatLng locationLatLng = new WeightedLatLng(locationToAdd.getCoordinates(), locationToAdd.getNumOfLocatedDevices() * 1.0);
+                data.add(locationLatLng);
+
+                provider = new HeatmapTileProvider.Builder().weightedData(data)
+                        .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+
+                overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+            }
+        };
+
+        addPointThread.run();
+    }
+
+    /**
+     * Used when it is necessary to reload the map
+     * @param firstLoad True if it is the first time the app loads the map
+     */
+    private void reloadHeatMapPoints(boolean firstLoad){
+
+        Map<Location, Integer> locationData;
+        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+        locationData = databaseHelper.selectLocationsForHeatmap();
+
         ArrayList<WeightedLatLng> data = new ArrayList<>();
-        data.add(locationLatLng);
+        LatLng lastPointCoordinates = null;
+        for(Location loc: locationData.keySet()){
+            WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
+                    locationData.get(loc));
 
-        HeatmapTileProvider provider = new HeatmapTileProvider.Builder().weightedData(data)
-                .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+            data.add(locationToInsert);
+            lastPointCoordinates = loc.getCoordinates();
+        }
 
-        TileOverlay overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+        if(data.size() > 0){
+            provider = new HeatmapTileProvider.Builder().weightedData(data)
+                    .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
 
-    }
+            //Remove all the existing data on the heatmap
+            if(!firstLoad){
+                googleMap.clear();
+                overlay.remove();
+                overlay.clearTileCache();
+            }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
+            overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
+        }
     }
 
     //Action bar
@@ -265,7 +307,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //----------------------------------------------------------------------------------------------------------------------
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        CameraChangeListener listener = new CameraChangeListener();
+        googleMap.setOnCameraChangeListener(listener);
         this.googleMap = googleMap;
+
+        //Reload heatmap
+        reloadHeatMapPoints(true);
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -317,11 +364,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());*/
             locationList.add(location);
-            addHeatMap(location.getCoordinates(), location.getNumOfLocatedDevices());
+            addSinglePointToHeatMap(location);
             //CAMERA AND VIEW DOCUMENTATION
             //https://developers.google.com/maps/documentation/android-api/views
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
             lastKnownLocation = location;
+        }
+    }
+
+    /**
+     * Custom OnCameraChangeListener to react to the changes in zoom made by the user.
+     */
+    private class CameraChangeListener implements GoogleMap.OnCameraChangeListener {
+        @Override
+        public void onCameraChange(CameraPosition cameraPosition) {
+            if(cameraPosition.zoom > ZOOM_LEVEL){
+                provider.setRadius((int) ((HEATMAP_RADIUS * cameraPosition.zoom)/ZOOM_LEVEL));
+                overlay.clearTileCache();
+                googleMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL));
+            }
         }
     }
 

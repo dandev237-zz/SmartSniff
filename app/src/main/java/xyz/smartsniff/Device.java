@@ -95,40 +95,20 @@ public class Device {
         return ssid;
     }
 
-    public void setSsid(String ssid) {
-        this.ssid = ssid;
-    }
-
     public String getBssid() {
         return bssid;
-    }
-
-    public void setBssid(String bssid) {
-        this.bssid = bssid;
     }
 
     public String getCharacteristics() {
         return characteristics;
     }
 
-    public void setCharacteristics(String characteristics) {
-        this.characteristics = characteristics;
-    }
-
     public DeviceType getType() {
         return type;
     }
 
-    public void setType(DeviceType type) {
-        this.type = type;
-    }
-
     public String getManufacturer() {
         return manufacturer;
-    }
-
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
     }
 }
 

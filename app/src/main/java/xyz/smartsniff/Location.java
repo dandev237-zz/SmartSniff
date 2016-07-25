@@ -24,16 +24,20 @@ public class Location {
         locatedDevices = new LinkedList<>();
     }
 
+    /**
+     * Constructor used when reloading the heatmap after the user starts the app.
+     * @param coordinates
+     */
+    public Location(LatLng coordinates){
+        this.coordinates = coordinates;
+    }
+
     public void addFoundDevice(Device device){
         locatedDevices.add(device);
     }
 
     public String getDate() {
         return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
     }
 
     public LatLng getCoordinates() {
@@ -44,19 +48,11 @@ public class Location {
         return coordinates.latitude + ", " + coordinates.longitude;
     }
 
-    public void setCoordinates(LatLng coordinates) {
-        this.coordinates = coordinates;
-    }
-
     public LinkedList<Device> getLocatedDevices() {
         return locatedDevices;
     }
 
     public int getNumOfLocatedDevices() {
         return locatedDevices.size();
-    }
-
-    public void setLocatedDevices(LinkedList<Device> locatedDevices) {
-        this.locatedDevices = locatedDevices;
     }
 }
