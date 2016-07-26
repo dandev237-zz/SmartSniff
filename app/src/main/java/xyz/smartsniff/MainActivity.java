@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private Date startDate, endDate;
     private int sessionResults;
+    private boolean disableAppBarFlag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if (isChecked) {
+                    disableAppBarFlag = true;
+
                     scanLayout.setVisibility(View.VISIBLE);
                     discoveriesTextView.setText(String.valueOf(sessionResults));
 
@@ -117,12 +120,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     beginScanningProcedure();
                 } else {
                     scanLayout.setVisibility(View.INVISIBLE);
+
                     geoGPS.disconnect();
                     endDate = new Date();
 
                     storeData();
 
+                    Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
+                            ".", Toast.LENGTH_SHORT).show();
+
                     sessionResults = 0;
+
+                    disableAppBarFlag = false;
                 }
             }
         });
@@ -178,9 +187,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 //addPointsToHeatMap(locationList);
                 reloadHeatMapPoints(false);
-
-                Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
-                        ".", Toast.LENGTH_SHORT).show();
             }
         };
 
@@ -232,9 +238,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             //Remove all the existing data on the heatmap
             if(!firstLoad){
-                googleMap.clear();
-                overlay.remove();
-                overlay.clearTileCache();
+                clearMap();
             }
 
             overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
@@ -243,12 +247,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void clearMap() {
+        googleMap.clear();
+        overlay.remove();
+        overlay.clearTileCache();
+    }
+
     //Action bar
     //----------------------------------------------------------------------------------------------------------------------
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu){
+        menu.findItem(R.id.action_delete_data).setEnabled(!disableAppBarFlag);
+        menu.findItem(R.id.action_send_data).setEnabled(!disableAppBarFlag);
+        menu.findItem(R.id.action_settings).setEnabled(!disableAppBarFlag);
         return true;
     }
 
@@ -289,6 +307,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     public void onClick(DialogInterface dialogInterface, int i) {
                         //Delete all database records
                         databaseHelper.deleteDatabase(getApplicationContext());
+                        clearMap();
                     }
                 })
                 .setNegativeButton(R.string.delete_alert_dialog_negative_button, new DialogInterface.OnClickListener() {
