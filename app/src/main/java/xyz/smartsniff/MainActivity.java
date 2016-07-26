@@ -272,6 +272,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -280,7 +282,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
-            showDeleteAlertDialog();
+            if(databaseHelper.selectSessions() > 0)
+                showDeleteAlertDialog();
+            else
+                Toast.makeText(getApplicationContext(), "ERROR: No hay datos que borrar", Toast.LENGTH_SHORT)
+                        .show();
         }
 
         if (id == R.id.action_send_data) {

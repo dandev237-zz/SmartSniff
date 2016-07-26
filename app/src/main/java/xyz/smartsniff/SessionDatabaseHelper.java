@@ -255,7 +255,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
 
             db.setTransactionSuccessful();
             Toast.makeText(applicationContext, "Datos borrados satisfactoriamente", Toast.LENGTH_SHORT)
-                    .show();
+                        .show();
         }catch(SQLException e){
             Log.d("DELETE DATA FROM DB", "ERROR WHILE DELETING DATA FROM DB");
         }finally{
@@ -301,5 +301,28 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         }
 
         return locationMap;
+    }
+
+    /**
+     * Returns the number of sessions stored in this database.
+     * @return
+     */
+    public int selectSessions(){
+        int numberOfSessions = 0;
+
+        SQLiteDatabase db = getReadableDatabase();
+        db.beginTransaction();
+        try {
+            String countQuery = "SELECT count(*) FROM " + TABLE_SESSIONS;
+            Cursor countCursor = db.rawQuery(countQuery, null);
+            if(countCursor.moveToFirst())
+                numberOfSessions = countCursor.getInt(0);
+        }catch(SQLException e){
+            Log.d("selectLocationsHeatmap", "ERROR WHILE GETTING LOCATIONS FOR HEATMAP");
+        }finally{
+            db.endTransaction();
+        }
+
+        return numberOfSessions;
     }
 }
