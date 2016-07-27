@@ -23,6 +23,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -36,7 +42,6 @@ import com.google.maps.android.heatmaps.WeightedLatLng;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +60,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final double HEATMAP_OPACITY = 0.6;
     private static final int HEATMAP_RADIUS = 40;
 
+    private static final String MANUFACTURER_REQUEST_URL = "http://api.macvendors.com/";
+    private static final String MANUFACTURER_NOT_FOUND = "NotFound";
+
     private Toolbar appBar;
     private TableLayout scanLayout;
     private ToggleButton scanButton;
@@ -69,8 +77,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private WifiManager wifiManager;
     private CustomReceiver receiver;
     private GeolocationGPS geoGPS;
-    private LinkedList<Location> locationList;
     private SharedPreferences preferences;
+
+    private RequestQueue queue;
 
     private Date startDate, endDate;
     private int sessionResults;
@@ -98,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         geoGPS = new GeolocationGPS(getApplicationContext(), this);
-        locationList = new LinkedList<>();
         sessionResults = 0;
 
         receiver = new CustomReceiver();
@@ -117,6 +125,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     startDate = new Date();
                     initDateTextView.setText(Utils.formatDate(startDate));
 
+                    Session session = new Session(startDate);
+                    databaseHelper.addSession(session);
+
                     beginScanningProcedure();
                 } else {
                     scanLayout.setVisibility(View.INVISIBLE);
@@ -124,7 +135,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     geoGPS.disconnect();
                     endDate = new Date();
 
-                    storeData();
+                    databaseHelper.updateSession(Utils.formatDate(endDate));
+                    reloadHeatMapPoints(false);
+
+                    //storeData();
 
                     Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
                             ".", Toast.LENGTH_SHORT).show();
@@ -169,28 +183,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         scanningThread.start();
     }
 
-    private void storeData() {
-        Thread storeThread = new Thread(){
+    private void storeLocationInDb(final Location location) {
+        Thread storeLocationThread = new Thread(){
             public void run(){
-                Session session = new Session(startDate, endDate);
-                databaseHelper.addSession(session);
-                for(Location loc : locationList){
-                    databaseHelper.addLocation(loc);
-                    for(Device dev : loc.getLocatedDevices()){
-                        databaseHelper.addDevice(dev);
-                        databaseHelper.addAssociation();
-                    }
-                }
-
-                //Log.d("Scan Button", "SCAN BUTTON PRESSED. STATUS: UNCHECKED");
-                //Log.d("Scan Button", "SESSION ENDED. START DATE: " + startDate + ", END DATE: " + endDate);
-
-                //addPointsToHeatMap(locationList);
-                reloadHeatMapPoints(false);
+                databaseHelper.addLocation(location);
             }
         };
 
-        storeThread.run();
+        storeLocationThread.run();
+    }
+
+    private void createAssociation(final Device device, final boolean addDevice){
+        Thread storeDeviceThread = new Thread(){
+            public void run(){
+                if(addDevice)
+                    databaseHelper.addDevice(device);
+
+                databaseHelper.addAssociation();
+            }
+        };
+
+        storeDeviceThread.run();
     }
 
     //Used after a scan
@@ -216,35 +229,40 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Used when it is necessary to reload the map
      * @param firstLoad True if it is the first time the app loads the map
      */
-    private void reloadHeatMapPoints(boolean firstLoad){
+    private void reloadHeatMapPoints(final boolean firstLoad){
+        Thread reloadMapThread = new Thread(){
+            public void run(){
+                Map<Location, Integer> locationData;
+                databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+                locationData = databaseHelper.selectLocationsForHeatmap();
 
-        Map<Location, Integer> locationData;
-        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
-        locationData = databaseHelper.selectLocationsForHeatmap();
+                ArrayList<WeightedLatLng> data = new ArrayList<>();
+                LatLng lastPointCoordinates = null;
+                for(Location loc: locationData.keySet()){
+                    WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
+                            locationData.get(loc));
 
-        ArrayList<WeightedLatLng> data = new ArrayList<>();
-        LatLng lastPointCoordinates = null;
-        for(Location loc: locationData.keySet()){
-            WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
-                    locationData.get(loc));
+                    data.add(locationToInsert);
+                    lastPointCoordinates = loc.getCoordinates();
+                }
 
-            data.add(locationToInsert);
-            lastPointCoordinates = loc.getCoordinates();
-        }
+                if(data.size() > 0){
+                    provider = new HeatmapTileProvider.Builder().weightedData(data)
+                            .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
 
-        if(data.size() > 0){
-            provider = new HeatmapTileProvider.Builder().weightedData(data)
-                    .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+                    //Remove all the existing data on the heatmap
+                    if(!firstLoad){
+                        clearMap();
+                    }
 
-            //Remove all the existing data on the heatmap
-            if(!firstLoad){
-                clearMap();
+                    overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
+                }
             }
+        };
 
-            overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
-        }
+        reloadMapThread.run();
     }
 
     private void clearMap() {
@@ -349,57 +367,67 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            //Get a location
-            LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
+            Thread onReceiveThread = new Thread(){
+                public void run(){
+                    //Get a location
+                    LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
 
-            //Get a date
-            Date locationDate = new Date();
+                    //Get a date
+                    Date locationDate = new Date();
 
-            //Create a Location object
-            Location location;
-            if (lastKnownLocation != null && lastKnownLocation.getCoordinates().equals(locationCoordinates))
-                //I'm in the same place, use the Location object contained in lastKnownLocation
-                location = lastKnownLocation;
-            else
-                //I'm in a new spot, create a new Location object
-                location = new Location(locationDate, locationCoordinates);
+                    //Create a Location object
+                    Location location;
+                    if (lastKnownLocation != null && lastKnownLocation.getCoordinates().equals(locationCoordinates))
+                        //I'm in the same place, use the Location object contained in lastKnownLocation
+                        location = lastKnownLocation;
+                    else{
+                        //I'm in a new spot, create a new Location object
+                        location = new Location(locationDate, locationCoordinates);
+                        storeLocationInDb(location);
+                    }
 
+                    //Get the scan results
+                    List<ScanResult> scanResultList = wifiManager.getScanResults();
 
-            //Get the scan results
-            List<ScanResult> scanResultList = wifiManager.getScanResults();
+                    //For each scan result, create a Device and add it to the Location devices list
+                    //If the user hasn't moved, any devices already discovered on that location won't be registered again
+                    for (ScanResult s : scanResultList) {
+                        Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
+                        if (!location.getLocatedDevices().contains(device)) {
+                            location.addFoundDevice(device);
 
-            //For each scan result, create a Device and add it to the Location devices list
-            //If the user hasn't moved, any devices already discovered on that location won't be registered again
-            for (ScanResult s : scanResultList) {
-                Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI, getApplicationContext());
-                if (!location.getLocatedDevices().contains(device)) {
-                    //If the device is new for this location, get his manufacturer
-                    device.getManufacturerFromBssid(device.getBssid());
-                    location.addFoundDevice(device);
-                    sessionResults++;
-                    discoveriesTextView.setText(String.valueOf(sessionResults));
-                    //Log.d("NEW DEVICE FOUND", "New device found!!");
-                } /*else {
-                    Log.d("SAME DEVICE DISCOVERED", "I've seen a device already recorded!");
-                }*/
-            }
+                            //Add the device to the database if and only if it doesn't exist in it
+                            Boolean addDevice = false;
+                            if(!databaseHelper.deviceExistsInDb(device)){
+                                addDevice = true;
+                                getManufacturerFromBssid(device, device.getBssid());
+                                sessionResults++;
+                            }
 
-            /*for(Device d : location.getLocatedDevices()){
-                Log.d("FOUND DEVICE", d.getBssid());
-            }
-            Log.d("LOCATION", location.getCoordinatesString() + ". Date: " + location.getDate());*/
-            locationList.add(location);
-            addSinglePointToHeatMap(location);
-            //CAMERA AND VIEW DOCUMENTATION
-            //https://developers.google.com/maps/documentation/android-api/views
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
-            lastKnownLocation = location;
+                            createAssociation(device, addDevice);
+
+                            discoveriesTextView.setText(String.valueOf(sessionResults));
+                            //Log.d("NEW DEVICE FOUND", "New device found!!");
+                        }
+                    }
+
+                    addSinglePointToHeatMap(location);
+
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+                    lastKnownLocation = location;
+                }
+            };
+
+            onReceiveThread.run();
         }
     }
 
     /**
      * Custom OnCameraChangeListener to react to the changes in zoom made by the user.
+     * @see <a href="https://developers.google.com/maps/documentation/android-api/views">
+     *     GOOGLE API Camera View Documentation</a>
      */
+
     private class CameraChangeListener implements GoogleMap.OnCameraChangeListener {
         @Override
         public void onCameraChange(CameraPosition cameraPosition) {
@@ -409,6 +437,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 googleMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL));
             }
         }
+    }
+
+    /**
+     * Obtains the manufacturer of the ethernet/bluetooth card based on the MAC address of the device.
+     * This method is only called when the device must be associated with a particular location (i.e.
+     * the device hasn't been discovered yet) in order to minimize the number of requests sent to the
+     * API server.
+     *
+     * @see <a href="http://www.macvendors.com/api"> API Documentation</a>
+     * @see <a href="https://developer.android.com/training/volley/simple.html">Volley Documentation</a>
+     * @param bssid MAC Address
+     */
+    public void getManufacturerFromBssid(final Device device, final String bssid) {
+        //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
+        if(queue == null)
+            queue = Volley.newRequestQueue(getApplicationContext());
+
+        Thread requestManufacturerThread = new Thread(){
+            public void run(){
+                //http://api.macvendors.com/00:11:22:33:44:55
+                String url = MANUFACTURER_REQUEST_URL + bssid;
+
+                //Request a response from the provided URL
+                StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //Get the manufacturer from the response string
+                        //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
+                        device.setManufacturer(response);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        //Code 404 was received: no manufacturer found
+                        //Log.d(TAG, "MANUFACTURER NOT FOUND");
+                        device.setManufacturer(MANUFACTURER_NOT_FOUND);
+                    }
+                });
+                //Add the request to the queue
+                queue.add(request);
+            }
+        };
+
+        requestManufacturerThread.run();
     }
 
 }

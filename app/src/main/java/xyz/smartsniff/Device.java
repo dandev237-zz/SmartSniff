@@ -18,55 +18,18 @@ import com.android.volley.toolbox.Volley;
  */
 public class Device {
 
-    private static final String REQUEST_URL = "http://api.macvendors.com/";
-    private static final String MANUFACTURER_NOT_FOUND = "NotFound";
+
     private static final String TAG = "DEVICE";
 
-    private Context appContext;
     private String ssid, bssid, characteristics, manufacturer;
     private DeviceType type;
 
-    public Device(String ssid, String bssid, String characteristics, DeviceType type, Context context){
+
+    public Device(String ssid, String bssid, String characteristics, DeviceType type){
         this.ssid = ssid;
         this.bssid = bssid;
         this.characteristics = characteristics;
         this.type = type;
-        appContext = context;
-    }
-
-    /**
-     * Obtains the manufacturer of the ethernet/bluetooth card based on the MAC address of the device.
-     * This method is only called when the device must be associated with a particular location (i.e.
-     * the device hasn't been discovered yet) in order to minimize the number of requests sent to the
-     * API server.
-     *
-     * @see <a href="http://www.macvendors.com/api"> API Documentation</a>
-     * @see <a href="https://developer.android.com/training/volley/simple.html">Volley Documentation</a>
-     * @param bssid MAC Address
-     */
-    public void getManufacturerFromBssid(String bssid) {
-        RequestQueue queue = Volley.newRequestQueue(appContext);
-        //http://api.macvendors.com/00:11:22:33:44:55
-        String url = REQUEST_URL + bssid;
-
-        //Request a response from the provided URL
-        StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                //Get the manufacturer from the response string
-                //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
-                manufacturer = response;
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                //Code 404 was received: no manufacturer found
-                //Log.d(TAG, "MANUFACTURER NOT FOUND");
-                manufacturer = MANUFACTURER_NOT_FOUND;
-            }
-        });
-        //Add the request to the queue
-        queue.add(request);
     }
 
     /**
@@ -109,6 +72,10 @@ public class Device {
 
     public String getManufacturer() {
         return manufacturer;
+    }
+
+    public void setManufacturer(String manufacturer){
+        this.manufacturer = manufacturer;
     }
 }
 

@@ -14,9 +14,9 @@ public class Session {
 
     private String startDate, endDate;
 
-    public Session(Date startDate, Date endDate){
+    public Session(Date startDate){
         this.startDate = Utils.formatDate(startDate);
-        this.endDate = Utils.formatDate(endDate);
+        endDate = "";
     }
 
     public String getStartDate() {
@@ -25,6 +25,10 @@ public class Session {
 
     public String getEndDate() {
         return endDate;
+    }
+
+    public void setEndDate(Date endDate){
+        this.endDate = Utils.formatDate(endDate);
     }
 
     @Override

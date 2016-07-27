@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -156,21 +157,38 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         try{
             ContentValues values = new ContentValues();
             values.put(KEY_SESSION_STARTDATE, session.getStartDate());
-            values.put(KEY_SESSION_ENDDATE, session.getEndDate());
+            //values.put(KEY_SESSION_ENDDATE, session.getEndDate());
 
             long rowId = db.insertOrThrow(TABLE_SESSIONS, null, values);
             if(rowId > sessionId)           // 0 > -1
                 sessionId = rowId;
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
+            //Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
         }finally {
             db.endTransaction();
         }
     }
 
-    public void addDevice (Device device){
+    public void updateSession(String formattedEndDate){
         SQLiteDatabase db = getWritableDatabase();
+
+        db.beginTransaction();
+        try{
+            ContentValues values = new ContentValues();
+            values.put(KEY_SESSION_ENDDATE, formattedEndDate);
+
+            db.update(TABLE_SESSIONS, values, KEY_SESSION_ID + "=" + sessionId, null);
+        }catch(SQLException e){
+            //Log.d("UPDATE SESSION", "ERROR WHILE UPDATING A SESSION");
+        }finally{
+            db.endTransaction();
+        }
+    }
+
+    public void addDevice (final Device device){
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor c = null;
 
         db.beginTransaction();
         try{
@@ -187,21 +205,50 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 deviceId = rowId;
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            Log.d("ADD DEVICE TO DB", "ERROR WHILE ADDING A DEVICE TO DB");
+            //Log.d("ADD DEVICE TO DB", "ERROR WHILE ADDING A DEVICE TO DB");
             //The error is caused because the device already exists in the database.
             //We need to get the ID of such device.
             String[] fields = new String[]{KEY_DEVICE_ID};
             String[] args = new String[]{device.getBssid()};
 
-            Cursor c = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
+            c = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
             //Check if there is at least one result
             if(c.moveToFirst()){
                 deviceId = c.getInt(0);
-                Log.d("ADD DEVICE TO DB", "EXISTING DEVICE ID FOUND: " + deviceId);
+                //Log.d("ADD DEVICE TO DB", "EXISTING DEVICE ID FOUND: " + deviceId);
             }
         }finally {
             db.endTransaction();
+            if(c != null)
+                c.close();
         }
+    }
+
+    public boolean deviceExistsInDb(Device device){
+        boolean exists = false;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try {
+            String[] fields = new String[]{KEY_DEVICE_ID};
+            String[] args = new String[]{device.getBssid()};
+
+            cursor = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
+            //Check if there is at least one result
+            if(cursor.moveToFirst()){
+                deviceId = cursor.getInt(0);
+                exists = true;
+            }
+        }catch(SQLException e){
+            Log.d("selectLocationsHeatmap", "ERROR WHILE GETTING LOCATIONS FOR HEATMAP");
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return exists;
     }
 
     public void addLocation (Location location){
@@ -218,7 +265,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 locationId = rowId;
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
+            //Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
         }finally {
             db.endTransaction();
         }
@@ -237,7 +284,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             db.insertOrThrow(TABLE_ASOCSESSIONSDEVICES, null, values);
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            Log.d("ADD ASSOCIATION TO DB", "ERROR WHILE ADDING AN ASSOCIATION TO DB");
+            //Log.d("ADD ASSOCIATION TO DB", "ERROR WHILE ADDING AN ASSOCIATION TO DB");
         }finally {
             db.endTransaction();
         }
@@ -257,7 +304,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             Toast.makeText(applicationContext, "Datos borrados satisfactoriamente", Toast.LENGTH_SHORT)
                         .show();
         }catch(SQLException e){
-            Log.d("DELETE DATA FROM DB", "ERROR WHILE DELETING DATA FROM DB");
+            //Log.d("DELETE DATA FROM DB", "ERROR WHILE DELETING DATA FROM DB");
         }finally{
             db.endTransaction();
         }
@@ -272,10 +319,11 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         Map<Location, Integer> locationMap = new ArrayMap<>();
 
         SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
         db.beginTransaction();
         try{
             String selectQuery = "SELECT * FROM " + TABLE_LOCATIONS;
-            Cursor cursor = db.rawQuery(selectQuery, null);
+            cursor = db.rawQuery(selectQuery, null);
 
             if(cursor.moveToFirst()){
                 do {
@@ -298,6 +346,8 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             Log.d("selectLocationsHeatmap", "ERROR WHILE GETTING LOCATIONS FOR HEATMAP");
         }finally{
             db.endTransaction();
+            if(cursor != null)
+                cursor.close();
         }
 
         return locationMap;
@@ -311,16 +361,19 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         int numberOfSessions = 0;
 
         SQLiteDatabase db = getReadableDatabase();
+        Cursor countCursor = null;
         db.beginTransaction();
         try {
             String countQuery = "SELECT count(*) FROM " + TABLE_SESSIONS;
-            Cursor countCursor = db.rawQuery(countQuery, null);
+            countCursor = db.rawQuery(countQuery, null);
             if(countCursor.moveToFirst())
                 numberOfSessions = countCursor.getInt(0);
         }catch(SQLException e){
             Log.d("selectLocationsHeatmap", "ERROR WHILE GETTING LOCATIONS FOR HEATMAP");
         }finally{
             db.endTransaction();
+            if(countCursor != null)
+                countCursor.close();
         }
 
         return numberOfSessions;
