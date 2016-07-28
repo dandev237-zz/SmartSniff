@@ -42,6 +42,7 @@ import com.google.maps.android.heatmaps.WeightedLatLng;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GeolocationGPS geoGPS;
     private SharedPreferences preferences;
 
+    private LinkedList<Location> scanLocations;
+
     private RequestQueue queue;
 
     private Date startDate, endDate;
@@ -107,6 +110,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         geoGPS = new GeolocationGPS(getApplicationContext(), this);
+
+        scanLocations = new LinkedList<>();
         sessionResults = 0;
 
         receiver = new CustomReceiver();
@@ -132,11 +137,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 } else {
                     scanLayout.setVisibility(View.INVISIBLE);
 
+                    unregisterReceiver(receiver);
                     geoGPS.disconnect();
+
                     endDate = new Date();
 
                     databaseHelper.updateSession(Utils.formatDate(endDate));
-                    reloadHeatMapPoints(false);
+                    //reloadHeatMapPoints(false);
+                    //addPointsToHeatMap(scanLocations);
 
                     //storeData();
 
@@ -144,6 +152,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             ".", Toast.LENGTH_SHORT).show();
 
                     sessionResults = 0;
+                    scanLocations.clear();
 
                     disableAppBarFlag = false;
                 }
@@ -177,7 +186,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         lastScanTime = scanTime;
                     }
                 }
-                unregisterReceiver(receiver);
             }
         };
         scanningThread.start();
@@ -206,7 +214,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         storeDeviceThread.run();
     }
 
-    //Used after a scan
     private void addSinglePointToHeatMap(final Location locationToAdd) {
         Thread addPointThread = new Thread(){
             public void run(){
@@ -225,6 +232,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         addPointThread.run();
     }
 
+    private void addPointsToHeatMap(final LinkedList<Location> scanLocations){
+        Thread addPointsThread = new Thread(){
+            public void run(){
+                ArrayList<WeightedLatLng> data = new ArrayList<>();
+
+                for(Location locationToAdd : scanLocations){
+                    WeightedLatLng locationLatLng = new WeightedLatLng(locationToAdd.getCoordinates(), locationToAdd.getNumOfLocatedDevices() * 1.0);
+                    data.add(locationLatLng);
+                }
+
+                provider = new HeatmapTileProvider.Builder().weightedData(data)
+                        .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+
+                overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+            }
+        };
+
+        addPointsThread.run();
+    }
     /**
      * Used when it is necessary to reload the map
      * @param firstLoad True if it is the first time the app loads the map
@@ -257,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
 
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
+                    //googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
                 }
             }
         };
@@ -298,6 +324,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
+        if(id == R.id.action_update_map){
+            Log.d("AppBar Update Map", "APPBAR: UPDATE MAP BUTTON PRESSED");
+            reloadHeatMapPoints(false);
+        }
+
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
             if(databaseHelper.selectSessions() > 0)
@@ -309,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (id == R.id.action_send_data) {
             Log.d("AppBar Send", "APPBAR: SEND BUTTON PRESSED");
-            return true;
+
         }
 
         if (id == R.id.action_settings) {
@@ -367,58 +398,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Thread onReceiveThread = new Thread(){
-                public void run(){
-                    //Get a location
-                    LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
+            //Get a location
+            LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
 
-                    //Get a date
-                    Date locationDate = new Date();
+            //Get a date
+            Date locationDate = new Date();
 
-                    //Create a Location object
-                    Location location;
-                    if (lastKnownLocation != null && lastKnownLocation.getCoordinates().equals(locationCoordinates))
-                        //I'm in the same place, use the Location object contained in lastKnownLocation
-                        location = lastKnownLocation;
-                    else{
-                        //I'm in a new spot, create a new Location object
-                        location = new Location(locationDate, locationCoordinates);
-                        storeLocationInDb(location);
+            //Create a Location object
+            Location location;
+            if (isSameLocation(locationCoordinates))
+                //I'm in the same place, use the Location object contained in lastKnownLocation
+                location = lastKnownLocation;
+            else{
+                //I'm in a new spot, create a new Location object
+                location = new Location(locationDate, locationCoordinates);
+                storeLocationInDb(location);
+            }
+
+            //Get the scan results
+            List<ScanResult> scanResultList = wifiManager.getScanResults();
+
+            //For each scan result, create a Device and add it to the Location devices list
+            //If the user hasn't moved, any devices already discovered on that location won't be registered again
+            for (ScanResult s : scanResultList) {
+                Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
+                if (!location.getLocatedDevices().contains(device)) {
+                    location.addFoundDevice(device);
+
+                    //Add the device to the database if and only if it doesn't exist in it
+                    Boolean addDevice = false;
+                    if(!databaseHelper.deviceExistsInDb(device)){
+                        addDevice = true;
+                        getManufacturerFromBssid(device, device.getBssid());
+                        sessionResults++;
                     }
 
-                    //Get the scan results
-                    List<ScanResult> scanResultList = wifiManager.getScanResults();
+                    createAssociation(device, addDevice);
 
-                    //For each scan result, create a Device and add it to the Location devices list
-                    //If the user hasn't moved, any devices already discovered on that location won't be registered again
-                    for (ScanResult s : scanResultList) {
-                        Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
-                        if (!location.getLocatedDevices().contains(device)) {
-                            location.addFoundDevice(device);
-
-                            //Add the device to the database if and only if it doesn't exist in it
-                            Boolean addDevice = false;
-                            if(!databaseHelper.deviceExistsInDb(device)){
-                                addDevice = true;
-                                getManufacturerFromBssid(device, device.getBssid());
-                                sessionResults++;
-                            }
-
-                            createAssociation(device, addDevice);
-
-                            discoveriesTextView.setText(String.valueOf(sessionResults));
-                            //Log.d("NEW DEVICE FOUND", "New device found!!");
-                        }
-                    }
-
-                    addSinglePointToHeatMap(location);
-
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
-                    lastKnownLocation = location;
+                    discoveriesTextView.setText(String.valueOf(sessionResults));
+                    //Log.d("NEW DEVICE FOUND", "New device found!!");
                 }
-            };
+            }
 
-            onReceiveThread.run();
+            if(!isSameLocation(locationCoordinates) || location.getNumOfLocatedDevices() > lastKnownLocation.getNumOfLocatedDevices())
+                addSinglePointToHeatMap(location);
+
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+            lastKnownLocation = location;
+            scanLocations.add(location);
+        }
+
+        private boolean isSameLocation(LatLng locationCoordinates) {
+            return lastKnownLocation != null && lastKnownLocation.getCoordinates().equals(locationCoordinates);
         }
     }
 
