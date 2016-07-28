@@ -80,8 +80,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GeolocationGPS geoGPS;
     private SharedPreferences preferences;
 
-    private LinkedList<Location> scanLocations;
-
     private RequestQueue queue;
 
     private Date startDate, endDate;
@@ -111,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         geoGPS = new GeolocationGPS(getApplicationContext(), this);
 
-        scanLocations = new LinkedList<>();
         sessionResults = 0;
 
         receiver = new CustomReceiver();
@@ -152,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             ".", Toast.LENGTH_SHORT).show();
 
                     sessionResults = 0;
-                    scanLocations.clear();
 
                     disableAppBarFlag = false;
                 }
@@ -232,25 +228,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         addPointThread.run();
     }
 
-    private void addPointsToHeatMap(final LinkedList<Location> scanLocations){
-        Thread addPointsThread = new Thread(){
-            public void run(){
-                ArrayList<WeightedLatLng> data = new ArrayList<>();
-
-                for(Location locationToAdd : scanLocations){
-                    WeightedLatLng locationLatLng = new WeightedLatLng(locationToAdd.getCoordinates(), locationToAdd.getNumOfLocatedDevices() * 1.0);
-                    data.add(locationLatLng);
-                }
-
-                provider = new HeatmapTileProvider.Builder().weightedData(data)
-                        .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
-
-                overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-            }
-        };
-
-        addPointsThread.run();
-    }
     /**
      * Used when it is necessary to reload the map
      * @param firstLoad True if it is the first time the app loads the map
@@ -283,7 +260,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
 
-                    //googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
                 }
             }
         };
@@ -422,30 +399,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //If the user hasn't moved, any devices already discovered on that location won't be registered again
             for (ScanResult s : scanResultList) {
                 Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
-                if (!location.getLocatedDevices().contains(device)) {
-                    location.addFoundDevice(device);
+                location.addFoundDevice(device);
 
-                    //Add the device to the database if and only if it doesn't exist in it
-                    Boolean addDevice = false;
-                    if(!databaseHelper.deviceExistsInDb(device)){
-                        addDevice = true;
-                        getManufacturerFromBssid(device, device.getBssid());
-                        sessionResults++;
-                    }
-
-                    createAssociation(device, addDevice);
-
-                    discoveriesTextView.setText(String.valueOf(sessionResults));
-                    //Log.d("NEW DEVICE FOUND", "New device found!!");
+                //Add the device to the database if and only if it doesn't exist in it
+                Boolean addDevice = false;
+                if(!databaseHelper.deviceExistsInDb(device)){
+                    addDevice = true;
+                    getManufacturerFromBssid(device, device.getBssid());
+                    sessionResults++;
                 }
+                createAssociation(device, addDevice);
+
+                discoveriesTextView.setText(String.valueOf(sessionResults));
+                //Log.d("NEW DEVICE FOUND", "New device found!!");
             }
 
-            if(!isSameLocation(locationCoordinates) || location.getNumOfLocatedDevices() > lastKnownLocation.getNumOfLocatedDevices())
+            if(!isSameLocation(locationCoordinates))
                 addSinglePointToHeatMap(location);
 
+            //Map camera update
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+
+            //The list of found devices must not transfer from one location to another
+            location.getLocatedDevices().clear();
             lastKnownLocation = location;
-            scanLocations.add(location);
+
         }
 
         private boolean isSameLocation(LatLng locationCoordinates) {
