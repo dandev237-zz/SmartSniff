@@ -1,5 +1,6 @@
 package xyz.smartsniff;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -8,6 +9,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -37,9 +40,12 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.maps.android.geometry.Point;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
+import com.google.maps.android.projection.SphericalMercatorProjection;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -64,12 +70,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String MANUFACTURER_REQUEST_URL = "http://api.macvendors.com/";
     private static final String MANUFACTURER_NOT_FOUND = "NotFound";
 
-    private Toolbar appBar;
+    private ProgressDialog progressDialog;
+
     private TableLayout scanLayout;
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
 
-    private MapFragment mapFragment;
     private GoogleMap googleMap;
     private HeatmapTileProvider provider;
     private TileOverlay overlay;
@@ -93,10 +99,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         preferences = getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
 
-        appBar = (Toolbar) findViewById(R.id.app_toolbar);
+        Toolbar appBar = (Toolbar) findViewById(R.id.app_toolbar);
         setSupportActionBar(appBar);
 
-        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         scanLayout = (TableLayout) findViewById(R.id.scanLayout);
@@ -104,10 +110,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         initDateTextView = (TextView) findViewById(R.id.initDateTextView);
         scanLayout.setVisibility(View.INVISIBLE);
 
-        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+        databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        geoGPS = new GeolocationGPS(getApplicationContext(), this);
+        geoGPS = new GeolocationGPS(MainActivity.this, this);
 
         sessionResults = 0;
 
@@ -140,12 +146,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     endDate = new Date();
 
                     databaseHelper.updateSession(Utils.formatDate(endDate));
-                    //reloadHeatMapPoints(false);
-                    //addPointsToHeatMap(scanLocations);
+                    reloadHeatMapPoints(false);
 
-                    //storeData();
-
-                    Toast.makeText(getApplicationContext(), "Escaneo terminado. Hallazgos: " + sessionResults +
+                    Toast.makeText(MainActivity.this, "Escaneo terminado. Hallazgos: " + sessionResults +
                             ".", Toast.LENGTH_SHORT).show();
 
                     sessionResults = 0;
@@ -230,42 +233,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Used when it is necessary to reload the map
-     * @param firstLoad True if it is the first time the app loads the map
+     * @param firstLoad If it is the first time the app loads the map
      */
-    private void reloadHeatMapPoints(final boolean firstLoad){
-        Thread reloadMapThread = new Thread(){
-            public void run(){
-                Map<Location, Integer> locationData;
-                databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
-                locationData = databaseHelper.selectLocationsForHeatmap();
+    private void reloadHeatMapPoints(Boolean firstLoad){
+        initializeProgressDialog(firstLoad);
+        progressDialog.show();
+        if(!firstLoad)
+            clearMap();
 
-                ArrayList<WeightedLatLng> data = new ArrayList<>();
-                LatLng lastPointCoordinates = null;
-                for(Location loc: locationData.keySet()){
-                    WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
-                            locationData.get(loc));
-
-                    data.add(locationToInsert);
-                    lastPointCoordinates = loc.getCoordinates();
-                }
-
-                if(data.size() > 0){
-                    provider = new HeatmapTileProvider.Builder().weightedData(data)
-                            .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
-
-                    //Remove all the existing data on the heatmap
-                    if(!firstLoad){
-                        clearMap();
-                    }
-
-                    overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastPointCoordinates, ZOOM_LEVEL));
-                }
-            }
-        };
-
-        reloadMapThread.run();
+        new LoadMapTask().execute();
     }
 
     private void clearMap() {
@@ -293,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        databaseHelper = SessionDatabaseHelper.getInstance(getApplicationContext());
+        databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
 
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -301,17 +277,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if(id == R.id.action_update_map){
+        /*if(id == R.id.action_update_map){
             Log.d("AppBar Update Map", "APPBAR: UPDATE MAP BUTTON PRESSED");
             reloadHeatMapPoints(false);
-        }
+        }*/
 
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
             if(databaseHelper.selectSessions() > 0)
                 showDeleteAlertDialog();
             else
-                Toast.makeText(getApplicationContext(), "ERROR: No hay datos que borrar", Toast.LENGTH_SHORT)
+                Toast.makeText(MainActivity.this, "ERROR: No hay datos que borrar", Toast.LENGTH_SHORT)
                         .show();
         }
 
@@ -338,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         //Delete all database records
-                        databaseHelper.deleteDatabase(getApplicationContext());
+                        databaseHelper.deleteDatabase(MainActivity.this);
                         clearMap();
                     }
                 })
@@ -362,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         googleMap.setOnCameraChangeListener(listener);
         this.googleMap = googleMap;
 
-        //Reload heatmap
+        //Load heatmap
         reloadHeatMapPoints(true);
     }
     //----------------------------------------------------------------------------------------------------------------------
@@ -461,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void getManufacturerFromBssid(final Device device, final String bssid) {
         //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
         if(queue == null)
-            queue = Volley.newRequestQueue(getApplicationContext());
+            queue = Volley.newRequestQueue(MainActivity.this);
 
         Thread requestManufacturerThread = new Thread(){
             public void run(){
@@ -492,4 +468,63 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         requestManufacturerThread.run();
     }
 
+    //Loading Screen
+    //----------------------------------------------------------------------------------------------------------------------
+    private void initializeProgressDialog(Boolean firstLoad){
+        progressDialog = new ProgressDialog(MainActivity.this);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        if(firstLoad)
+            progressDialog.setMessage("Cargando mapa de calor, espere por favor...");
+        else
+            progressDialog.setMessage("Actualizando mapa de calor, espere por favor...");
+        progressDialog.setCancelable(false);
+        progressDialog.setIndeterminate(false);
+    }
+
+    private class LoadMapTask extends AsyncTask<Void, Void, ArrayList<WeightedLatLng>>{
+
+        @Override
+        protected ArrayList<WeightedLatLng> doInBackground(Void... voids) {
+            ArrayList<WeightedLatLng> data;
+            synchronized (this){
+                //Show the progress dialog for a little while
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Map<Location, Integer> locationData;
+                databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
+                locationData = databaseHelper.selectLocationsForHeatmap();
+
+                data = new ArrayList<>();
+                for(Location loc: locationData.keySet()){
+                    WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
+                            locationData.get(loc));
+
+                    data.add(locationToInsert);
+                }
+
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<WeightedLatLng> result){
+            //onPostExecute runs on the UI thread, so we cant paint the points on the map
+            paintPointsOnMap(result);
+
+            progressDialog.dismiss();
+        }
+    }
+
+    private void paintPointsOnMap(ArrayList<WeightedLatLng> points){
+        if(points.size() > 0) {
+            provider = new HeatmapTileProvider.Builder().weightedData(points)
+                    .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
+
+            overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
+        }
+    }
+    //----------------------------------------------------------------------------------------------------------------------
 }
