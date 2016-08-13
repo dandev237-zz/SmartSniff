@@ -15,8 +15,14 @@ public class Session {
     private String startDate, endDate;
 
     public Session(Date startDate){
+        this(startDate, null);
+    }
+
+    public Session(Date startDate, Date endDate){
         this.startDate = Utils.formatDate(startDate);
-        endDate = "";
+
+        if(endDate != null)
+            this.endDate = Utils.formatDate(endDate);
     }
 
     public String getStartDate() {

@@ -7,8 +7,10 @@ import android.support.v4.app.ActivityCompat;
 
 import com.google.android.gms.location.LocationRequest;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Class with methods used across the app.
@@ -34,9 +36,28 @@ public class Utils {
      * @return      The date, formatted.
      */
     public static String formatDate(Date date){
-        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
         String formattedDate = dateFormat.format(date);
 
         return formattedDate;
+    }
+
+    /**
+     * This method does the inverse operation of 'formatDate'.
+     * Given a formatted date (string), returns the same date contained in a Date object.
+     * @param stringDate    The string to parse.
+     * @return              The date, in a Date object.
+     */
+    public static Date reverseFormatDate(String stringDate){
+        SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
+        Date date = null;
+        try {
+            date = dateFormat.parse(stringDate);
+        } catch (ParseException e) {
+            //e.printStackTrace();
+            date = new Date();
+        }
+
+        return date;
     }
 }

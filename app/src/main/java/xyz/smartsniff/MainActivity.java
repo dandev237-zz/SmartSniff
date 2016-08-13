@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
-import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -40,12 +39,9 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.maps.android.geometry.Point;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
-import com.google.maps.android.projection.SphericalMercatorProjection;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -293,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (id == R.id.action_send_data) {
             Log.d("AppBar Send", "APPBAR: SEND BUTTON PRESSED");
-
+            sendDataToServer();
         }
 
         if (id == R.id.action_settings) {
@@ -327,6 +323,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         AlertDialog dialog = builderFirst.create();
         dialog.show();
+    }
+
+    private void sendDataToServer(){
+        if(databaseHelper.selectSessions() > 0){
+            //REST API url
+            //final String url = ...
+
+            //Collect all the stored data
+            List<Session> storedSessions = databaseHelper.getAllSesions();
+            List<Device> storedDevices = databaseHelper.getAllDevices();
+            List<Location> storedLocations = databaseHelper.getAllLocations();
+            List<Association> storedAssociations = databaseHelper.getAllAssociations();
+
+            //Build a JSON object containing all the data
+
+            //Send it to the server using the RESTful API
+        }else{
+            Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
+                    .show();
+        }
+
+
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -465,7 +483,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-        requestManufacturerThread.run();
+        requestManufacturerThread.start();
     }
 
     //Loading Screen

@@ -13,6 +13,8 @@ import android.widget.Toast;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -148,7 +150,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
-    //CRUD Operations
+    //Database operations
 
     public void addSession(Session session){
         SQLiteDatabase db = getWritableDatabase();
@@ -214,7 +216,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             c = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
             //Check if there is at least one result
             if(c.moveToFirst()){
-                deviceId = c.getInt(0);
+                deviceId = c.getInt(c.getColumnIndex(KEY_DEVICE_ID));
                 //Log.d("ADD DEVICE TO DB", "EXISTING DEVICE ID FOUND: " + deviceId);
             }
         }finally {
@@ -237,7 +239,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             cursor = db.query(TABLE_DEVICES, fields, KEY_DEVICE_BSSID + "=?", args, null, null, null);
             //Check if there is at least one result
             if(cursor.moveToFirst()){
-                deviceId = cursor.getInt(0);
+                deviceId = cursor.getInt(cursor.getColumnIndex(KEY_DEVICE_ID));
                 exists = true;
             }
         }catch(SQLException e){
@@ -378,4 +380,133 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
 
         return numberOfSessions;
     }
+
+    //Querying methods
+
+    public List<Session> getAllSesions(){
+        List<Session> sessions = new LinkedList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_SESSIONS;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                do{
+                    Date startDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_STARTDATE)));
+                    Date endDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_ENDDATE)));
+
+                    Session queriedSession = new Session(startDate, endDate);
+                    sessions.add(queriedSession);
+                }while(cursor.moveToNext());
+            }
+        }catch(SQLException e){
+            Log.d("getAllSessions", "ERROR WHILE GETTING SESSIONS FROM DB");
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return sessions;
+    }
+
+    public List<Location> getAllLocations(){
+        List<Location> locations = new LinkedList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_LOCATIONS;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                do{
+                    Date date = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_LOCATION_DATE)));
+                    String coordinatesString = cursor.getString(cursor.getColumnIndex(KEY_LOCATION_COORDINATES));
+
+                    //coordinates string format => "lat, long"
+                    String[] splitString = coordinatesString.trim().split(",");
+                    LatLng coordinates = new LatLng(Double.parseDouble(splitString[0]), Double.parseDouble(splitString[1]));
+
+                    Location queriedLocation = new Location(date, coordinates);
+                    locations.add(queriedLocation);
+                }while(cursor.moveToNext());
+            }
+        }catch(SQLException e){
+
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return locations;
+    }
+
+    public List<Device> getAllDevices(){
+        List<Device> devices = new LinkedList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_DEVICES;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                do{
+                    String ssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_SSID));
+                    String bssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_BSSID));
+                    String characteristics = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHARACTERISTICS));
+                    String manufacturer = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MANUFACTURER));
+                    String typeString = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE));
+
+                    DeviceType type = DeviceType.valueOf(typeString);
+
+                    Device queriedDevice = new Device(ssid, bssid, characteristics, manufacturer, type);
+                    devices.add(queriedDevice);
+                }while(cursor.moveToNext());
+            }
+        }catch(SQLException e){
+
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return devices;
+    }
+
+    public List<Association> getAllAssociations(){
+        List<Association> associations = new LinkedList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_ASOCSESSIONSDEVICES;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                do{
+                    int sessionId = cursor.getInt(cursor.getColumnIndex(KEY_ASSOCIATION_ID_SESSION_FK));
+                    int deviceId = cursor.getInt(cursor.getColumnIndex(KEY_ASSOCIATION_ID_DEVICE_FK));
+                    int locationId = cursor.getInt(cursor.getColumnIndex(KEY_ASSOCIATION_ID_LOCATION_FK));
+
+                    Association queriedAssociation = new Association(sessionId, deviceId, locationId);
+                    associations.add(queriedAssociation);
+                }while(cursor.moveToNext());
+            }
+        }catch(SQLException e){
+
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return associations;
+    }
+
 }

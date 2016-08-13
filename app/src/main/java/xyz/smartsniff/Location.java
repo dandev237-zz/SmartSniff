@@ -19,17 +19,19 @@ public class Location {
     private LinkedList<Device> locatedDevices;
 
     public Location(Date date, LatLng coordinates){
-        this.date = Utils.formatDate(date);
+        if(date != null)
+            this.date = Utils.formatDate(date);
+
         this.coordinates = coordinates;
         locatedDevices = new LinkedList<>();
     }
 
     /**
-     * Constructor used when reloading the heatmap after the user starts the app.
+     * Overloaded constructor used when reloading the heatmap.
      * @param coordinates
      */
     public Location(LatLng coordinates){
-        this.coordinates = coordinates;
+        this(null, coordinates);
     }
 
     public void addFoundDevice(Device device){

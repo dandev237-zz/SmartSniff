@@ -17,8 +17,6 @@ import com.android.volley.toolbox.Volley;
  * Fecha: 30/06/2016
  */
 public class Device {
-
-
     private static final String TAG = "DEVICE";
 
     private String ssid, bssid, characteristics, manufacturer;
@@ -26,9 +24,17 @@ public class Device {
 
 
     public Device(String ssid, String bssid, String characteristics, DeviceType type){
+        this(ssid, bssid, characteristics, null, type);
+    }
+
+    public Device(String ssid, String bssid, String characteristics, String manufacturer, DeviceType type){
         this.ssid = ssid;
         this.bssid = bssid;
         this.characteristics = characteristics;
+
+        if(manufacturer != null)
+            this.manufacturer = manufacturer;
+
         this.type = type;
     }
 
