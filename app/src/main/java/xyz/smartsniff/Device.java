@@ -17,11 +17,8 @@ import com.android.volley.toolbox.Volley;
  * Fecha: 30/06/2016
  */
 public class Device {
-    private static final String TAG = "DEVICE";
-
     private String ssid, bssid, characteristics, manufacturer;
     private DeviceType type;
-
 
     public Device(String ssid, String bssid, String characteristics, DeviceType type){
         this(ssid, bssid, characteristics, null, type);
@@ -64,24 +61,40 @@ public class Device {
         return ssid;
     }
 
+    public void setSsid(String ssid) {
+        this.ssid = ssid;
+    }
+
     public String getBssid() {
         return bssid;
+    }
+
+    public void setBssid(String bssid) {
+        this.bssid = bssid;
     }
 
     public String getCharacteristics() {
         return characteristics;
     }
 
-    public DeviceType getType() {
-        return type;
+    public void setCharacteristics(String characteristics) {
+        this.characteristics = characteristics;
     }
 
     public String getManufacturer() {
         return manufacturer;
     }
 
-    public void setManufacturer(String manufacturer){
+    public void setManufacturer(String manufacturer) {
         this.manufacturer = manufacturer;
+    }
+
+    public DeviceType getType() {
+        return type;
+    }
+
+    public void setType(DeviceType type) {
+        this.type = type;
     }
 }
 

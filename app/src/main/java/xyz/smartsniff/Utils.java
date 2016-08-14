@@ -6,6 +6,8 @@ import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
 import com.google.android.gms.location.LocationRequest;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -26,9 +28,9 @@ public class Utils {
     public static final String PREF_SCAN_INTERVAL = "Scan Interval";
     public static final int SCAN_INTERVAL_DEFAULT = 3000;
     public static final int GPS_PRIORITY_DEFAULT = LocationRequest.PRIORITY_HIGH_ACCURACY;
+    public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
 
-    private static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
-
+    public static final Gson gson = new GsonBuilder().setDateFormat(Utils.DATE_FORMAT).disableHtmlEscaping().create();
 
     /**
      * Given a date, this function returns the date with the format "dd/MM/yyyy HH:mm:ss"

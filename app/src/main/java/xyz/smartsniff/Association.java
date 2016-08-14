@@ -17,15 +17,30 @@ public class Association {
         this.locationId = locationId;
     }
 
+    //Getters and setters
+
+
     public int getSessionId() {
         return sessionId;
+    }
+
+    public void setSessionId(int sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public int getLocationId() {
+        return locationId;
+    }
+
+    public void setLocationId(int locationId) {
+        this.locationId = locationId;
     }
 
     public int getDeviceId() {
         return deviceId;
     }
 
-    public int getLocationId() {
-        return locationId;
+    public void setDeviceId(int deviceId) {
+        this.deviceId = deviceId;
     }
 }

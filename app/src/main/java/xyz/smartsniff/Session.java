@@ -11,30 +11,42 @@ import java.util.Date;
  */
 public class Session {
 
-
-    private String startDate, endDate;
+    private Date startDate, endDate;
+    private String macAddress;
 
     public Session(Date startDate){
         this(startDate, null);
     }
 
     public Session(Date startDate, Date endDate){
-        this.startDate = Utils.formatDate(startDate);
+        this.startDate = startDate;
 
         if(endDate != null)
-            this.endDate = Utils.formatDate(endDate);
+            this.endDate = endDate;
     }
 
-    public String getStartDate() {
+    public Date getStartDate() {
         return startDate;
     }
 
-    public String getEndDate() {
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(Date endDate){
-        this.endDate = Utils.formatDate(endDate);
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 
     @Override
@@ -42,4 +54,11 @@ public class Session {
         return "Start date: " + startDate + ". End date: " + endDate + ".";
     }
 
+    public String getStartDateString() {
+        return Utils.formatDate(startDate);
+    }
+
+    public String getEndDateString() {
+        return Utils.formatDate(endDate);
+    }
 }

@@ -25,10 +25,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -42,9 +44,10 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -327,9 +330,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void sendDataToServer(){
         if(databaseHelper.selectSessions() > 0){
-            //REST API url
-            //final String url = ...
-
             //Collect all the stored data
             List<Session> storedSessions = databaseHelper.getAllSesions();
             List<Device> storedDevices = databaseHelper.getAllDevices();
@@ -337,14 +337,50 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<Association> storedAssociations = databaseHelper.getAllAssociations();
 
             //Build a JSON object containing all the data
+            String myOwnDeviceAddress = wifiManager.getConnectionInfo().getMacAddress();
+            JSONGenerator jsonGenerator = new JSONGenerator(myOwnDeviceAddress);
+            JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedSessions, storedDevices, storedLocations,
+                    storedAssociations);
 
             //Send it to the server using the RESTful API
+            String url = "";
+            //final int[] statusCode = new int[1];
+            JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, localDataJSON,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            NetworkResponse netResponse = Utils.gson.fromJson(response.toString(), NetworkResponse.class);
+                            if(netResponse.statusCode == 201)
+                                Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
+                                        .show();
+
+                            /*
+                            if(statusCode[0] == 201)
+                                Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
+                                        .show();
+                             */
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(MainActivity.this, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    })/*{
+
+                @Override
+                protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
+                    statusCode[0] = response.statusCode;
+                    return super.parseNetworkResponse(response);
+                }
+            }*/;
+
+            queue.add(postRequest);
         }else{
             Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
                     .show();
         }
-
-
     }
     //----------------------------------------------------------------------------------------------------------------------
 
