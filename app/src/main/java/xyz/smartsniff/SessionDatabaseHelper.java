@@ -158,8 +158,8 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         db.beginTransaction();
         try{
             ContentValues values = new ContentValues();
-            values.put(KEY_SESSION_STARTDATE, session.getStartDate());
-            //values.put(KEY_SESSION_ENDDATE, session.getEndDate());
+            values.put(KEY_SESSION_STARTDATE, session.getStartDateString());
+            //values.put(KEY_SESSION_ENDDATE, session.getEndDateString());
 
             long rowId = db.insertOrThrow(TABLE_SESSIONS, null, values);
             if(rowId > sessionId)           // 0 > -1
@@ -259,7 +259,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         db.beginTransaction();
         try{
             ContentValues values = new ContentValues();
-            values.put(KEY_LOCATION_DATE, location.getDate());
+            values.put(KEY_LOCATION_DATE, location.getDateString());
             values.put(KEY_LOCATION_COORDINATES, location.getCoordinatesString());
 
             long rowId = db.insertOrThrow(TABLE_LOCATIONS, null, values);

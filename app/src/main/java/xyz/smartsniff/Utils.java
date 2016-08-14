@@ -26,8 +26,7 @@ public class Utils {
     public static final String PREF_SCAN_INTERVAL = "Scan Interval";
     public static final int SCAN_INTERVAL_DEFAULT = 3000;
     public static final int GPS_PRIORITY_DEFAULT = LocationRequest.PRIORITY_HIGH_ACCURACY;
-
-    private static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
 
 
     /**

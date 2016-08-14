@@ -42,6 +42,9 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 import com.google.maps.android.heatmaps.WeightedLatLng;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -337,14 +340,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<Association> storedAssociations = databaseHelper.getAllAssociations();
 
             //Build a JSON object containing all the data
+            String myOwnDeviceAddress = wifiManager.getConnectionInfo().getMacAddress();
+            JSONGenerator jsonGenerator = new JSONGenerator(myOwnDeviceAddress);
+            JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedSessions, storedDevices, storedLocations,
+                    storedAssociations);
 
             //Send it to the server using the RESTful API
+
         }else{
             Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
                     .show();
         }
-
-
     }
     //----------------------------------------------------------------------------------------------------------------------
 

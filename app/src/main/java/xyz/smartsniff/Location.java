@@ -14,13 +14,13 @@ import java.util.LinkedList;
  */
 public class Location {
 
-    private String date;
+    private Date date;
     private LatLng coordinates;
-    private LinkedList<Device> locatedDevices;
+    private transient LinkedList<Device> locatedDevices;
 
     public Location(Date date, LatLng coordinates){
         if(date != null)
-            this.date = Utils.formatDate(date);
+            this.date = date;
 
         this.coordinates = coordinates;
         locatedDevices = new LinkedList<>();
@@ -38,12 +38,8 @@ public class Location {
         locatedDevices.add(device);
     }
 
-    public String getDate() {
-        return date;
-    }
-
-    public LatLng getCoordinates() {
-        return coordinates;
+    public String getDateString() {
+        return Utils.formatDate(date);
     }
 
     public String getCoordinatesString(){
@@ -56,5 +52,23 @@ public class Location {
 
     public int getNumOfLocatedDevices() {
         return locatedDevices.size();
+    }
+
+    //Getters and setters
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public LatLng getCoordinates() {
+        return coordinates;
+    }
+
+    public void setCoordinates(LatLng coordinates) {
+        this.coordinates = coordinates;
     }
 }
