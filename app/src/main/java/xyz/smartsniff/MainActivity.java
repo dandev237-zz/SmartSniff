@@ -1,6 +1,9 @@
 package xyz.smartsniff;
 
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -69,6 +72,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String MANUFACTURER_REQUEST_URL = "http://api.macvendors.com/";
     private static final String MANUFACTURER_NOT_FOUND = "NotFound";
 
+    private static final int REQUEST_ENABLE_INTENT = 123;
+
     private ProgressDialog progressDialog;
 
     private TableLayout scanLayout;
@@ -85,11 +90,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GeolocationGPS geoGPS;
     private SharedPreferences preferences;
 
+    private BluetoothAdapter bluetoothAdapter;
+
     private RequestQueue queue;
 
     private Date startDate, endDate;
     private int sessionResults;
     private boolean disableAppBarFlag = false;
+    private boolean isBluetoothSupported = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +120,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(bluetoothAdapter == null){
+            //Device doesn't support Bluetooth functionality
+            isBluetoothSupported = false;
+        }
         geoGPS = new GeolocationGPS(MainActivity.this, this);
 
         sessionResults = 0;
@@ -128,6 +141,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     scanLayout.setVisibility(View.VISIBLE);
                     discoveriesTextView.setText(String.valueOf(sessionResults));
 
+                    if(isBluetoothSupported && !bluetoothAdapter.isEnabled()){
+                        Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_INTENT);
+                    }
+
                     geoGPS.connect();
                     startDate = new Date();
                     initDateTextView.setText(Utils.formatDate(startDate));
@@ -140,6 +158,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     scanLayout.setVisibility(View.INVISIBLE);
 
                     unregisterReceiver(receiver);
+                    bluetoothAdapter.cancelDiscovery();
+
                     geoGPS.disconnect();
 
                     endDate = new Date();
@@ -158,8 +178,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+
+        //To be sure we are not scanning
+        if(bluetoothAdapter != null){
+            bluetoothAdapter.cancelDiscovery();
+        }
+    }
+
     private void beginScanningProcedure() {
-        Thread scanningThread = new Thread() {
+        Thread wifiScanningThread = new Thread() {
             long lastScanTime = 0;
             int interval = preferences.getInt(Utils.PREF_SCAN_INTERVAL, Utils.SCAN_INTERVAL_DEFAULT);
 
@@ -186,7 +216,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         };
-        scanningThread.start();
+
+        //Register receiver and request first bluetooth discovery scan
+        registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        registerReceiver(receiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
+        bluetoothAdapter.startDiscovery();
+
+        wifiScanningThread.start();
     }
 
     private void storeLocationInDb(final Location location) {
@@ -405,55 +441,134 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            //Get a location
-            LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
+            String action = intent.getAction();
 
-            //Get a date
-            Date locationDate = new Date();
+            //Check intent action
+            if(action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)){
+                //The Receiver is responsible for requesting another discovery scan
+                bluetoothAdapter.startDiscovery();
+            }else{
+                //We've got results! Prepare location
+                //Get a location
+                LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
 
-            //Create a Location object
-            Location location;
-            if (isSameLocation(locationCoordinates))
-                //I'm in the same place, use the Location object contained in lastKnownLocation
-                location = lastKnownLocation;
-            else{
-                //I'm in a new spot, create a new Location object
-                location = new Location(locationDate, locationCoordinates);
-                storeLocationInDb(location);
-            }
+                //Get a date
+                Date locationDate = new Date();
 
-            //Get the scan results
-            List<ScanResult> scanResultList = wifiManager.getScanResults();
-
-            //For each scan result, create a Device and add it to the Location devices list
-            //If the user hasn't moved, any devices already discovered on that location won't be registered again
-            for (ScanResult s : scanResultList) {
-                Device device = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
-                location.addFoundDevice(device);
-
-                //Add the device to the database if and only if it doesn't exist in it
-                Boolean addDevice = false;
-                if(!databaseHelper.deviceExistsInDb(device)){
-                    addDevice = true;
-                    getManufacturerFromBssid(device, device.getBssid());
-                    sessionResults++;
+                //Create a Location object
+                Location location;
+                if (isSameLocation(locationCoordinates))
+                    //I'm in the same place, use the Location object contained in lastKnownLocation
+                    location = lastKnownLocation;
+                else{
+                    //I'm in a new spot, create a new Location object
+                    location = new Location(locationDate, locationCoordinates);
+                    storeLocationInDb(location);
                 }
-                createAssociation(device, addDevice);
 
-                discoveriesTextView.setText(String.valueOf(sessionResults));
-                //Log.d("NEW DEVICE FOUND", "New device found!!");
+                //Time to check those results
+                if(action.equals(BluetoothDevice.ACTION_FOUND)){
+                    //Bluetooth device
+                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+                    String btName = device.getName();
+                    String macAddress = device.getAddress();
+                    BluetoothClass btClass = device.getBluetoothClass();
+                    String deviceClass = determineBtMajorDevice(btClass);
+
+                    Device btDevice = new Device(btName, macAddress, deviceClass, DeviceType.BLUETOOTH);
+                    location.addFoundDevice(btDevice);
+
+                    boolean addDevice = false;
+                    if(!databaseHelper.deviceExistsInDb(btDevice)){
+                        addDevice = true;
+                        getManufacturerFromBssid(btDevice, btDevice.getBssid());
+                        sessionResults++;
+                    }
+                    createAssociation(btDevice, addDevice);
+
+                    discoveriesTextView.setText(String.valueOf(sessionResults));
+                }else{
+                    //Wifi device
+
+                    //Get the scan results
+                    List<ScanResult> scanResultList = wifiManager.getScanResults();
+
+                    //For each scan result, create a Device and add it to the Location devices list
+                    //If the user hasn't moved, any devices already discovered on that location won't be registered again
+                    for (ScanResult s : scanResultList) {
+                        Device wifiDevice = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
+                        location.addFoundDevice(wifiDevice);
+
+                        //Add the device to the database if and only if it doesn't exist in it
+                        Boolean addDevice = false;
+                        if(!databaseHelper.deviceExistsInDb(wifiDevice)){
+                            addDevice = true;
+                            getManufacturerFromBssid(wifiDevice, wifiDevice.getBssid());
+                            sessionResults++;
+                        }
+                        createAssociation(wifiDevice, addDevice);
+
+                        discoveriesTextView.setText(String.valueOf(sessionResults));
+                        //Log.d("NEW DEVICE FOUND", "New device found!!");
+                    }
+                }
+
+                if(!isSameLocation(locationCoordinates))
+                    addSinglePointToHeatMap(location);
+
+                //Map camera update
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+
+                //The list of found devices must not transfer from one location to another
+                location.getLocatedDevices().clear();
+
+                lastKnownLocation = location;
+            }
+        }
+
+        private String determineBtMajorDevice(BluetoothClass btClass){
+            String result = "";
+
+            switch(btClass.getMajorDeviceClass()){
+                case BluetoothClass.Device.Major.AUDIO_VIDEO:
+                    result = "AUDIO-VIDEO";
+                    break;
+                case BluetoothClass.Device.Major.COMPUTER:
+                    result = "COMPUTER";
+                    break;
+                case BluetoothClass.Device.Major.HEALTH:
+                    result = "HEALTH";
+                    break;
+                case BluetoothClass.Device.Major.IMAGING:
+                    result = "IMAGING";
+                    break;
+                case BluetoothClass.Device.Major.MISC:
+                    result = "MISC";
+                    break;
+                case BluetoothClass.Device.Major.NETWORKING:
+                    result = "NETWORKING";
+                    break;
+                case BluetoothClass.Device.Major.PERIPHERAL:
+                    result = "PERIPHERAL";
+                    break;
+                case BluetoothClass.Device.Major.PHONE:
+                    result = "PHONE";
+                    break;
+                case BluetoothClass.Device.Major.TOY:
+                    result = "TOY";
+                    break;
+                case BluetoothClass.Device.Major.UNCATEGORIZED:
+                    result = "UNCATEGORIZED";
+                    break;
+                case BluetoothClass.Device.Major.WEARABLE:
+                    result = "WEARABLE";
+                    break;
+                default:
+                    break;
             }
 
-            if(!isSameLocation(locationCoordinates))
-                addSinglePointToHeatMap(location);
-
-            //Map camera update
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
-
-            //The list of found devices must not transfer from one location to another
-            location.getLocatedDevices().clear();
-            lastKnownLocation = location;
-
+            return result;
         }
 
         private boolean isSameLocation(LatLng locationCoordinates) {

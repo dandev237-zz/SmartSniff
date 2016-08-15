@@ -19,7 +19,6 @@ public class Association {
 
     //Getters and setters
 
-
     public int getSessionId() {
         return sessionId;
     }
