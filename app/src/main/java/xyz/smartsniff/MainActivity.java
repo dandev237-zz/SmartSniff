@@ -158,7 +158,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     scanLayout.setVisibility(View.INVISIBLE);
 
                     unregisterReceiver(receiver);
-                    bluetoothAdapter.cancelDiscovery();
+                    if(isBluetoothSupported)
+                        bluetoothAdapter.cancelDiscovery();
 
                     geoGPS.disconnect();
 
@@ -218,9 +219,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
 
         //Register receiver and request first bluetooth discovery scan
-        registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
-        registerReceiver(receiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
-        bluetoothAdapter.startDiscovery();
+        if(isBluetoothSupported) {
+            registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+            registerReceiver(receiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
+            bluetoothAdapter.startDiscovery();
+        }
 
         wifiScanningThread.start();
     }
