@@ -126,6 +126,8 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 KEY_ASSOCIATION_ID_SESSION_FK + " INTEGER REFERENCES " + TABLE_SESSIONS + "," +
                 KEY_ASSOCIATION_ID_DEVICE_FK + " INTEGER REFERENCES " + TABLE_DEVICES + "," +
                 KEY_ASSOCIATION_ID_LOCATION_FK + " INTEGER REFERENCES " + TABLE_LOCATIONS +
+                ",PRIMARY KEY (" + KEY_ASSOCIATION_ID_SESSION_FK + ", " + KEY_ASSOCIATION_ID_DEVICE_FK + ", " +
+                                  KEY_ASSOCIATION_ID_LOCATION_FK + ")" +
                 ")";
 
         sqLiteDatabase.execSQL(CREATE_SESSIONS_TABLE);
@@ -219,6 +221,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 deviceId = c.getInt(c.getColumnIndex(KEY_DEVICE_ID));
                 //Log.d("ADD DEVICE TO DB", "EXISTING DEVICE ID FOUND: " + deviceId);
             }
+            db.setTransactionSuccessful();
         }finally {
             db.endTransaction();
             if(c != null)
@@ -286,7 +289,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             db.insertOrThrow(TABLE_ASOCSESSIONSDEVICES, null, values);
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            //Log.d("ADD ASSOCIATION TO DB", "ERROR WHILE ADDING AN ASSOCIATION TO DB");
+            Log.d("ADD ASSOCIATION TO DB", "ASSOCIATION ALREADY EXISTS: " + sessionId + "," + deviceId + "," + locationId);
         }finally {
             db.endTransaction();
         }

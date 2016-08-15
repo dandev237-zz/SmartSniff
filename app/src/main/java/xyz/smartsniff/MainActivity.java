@@ -235,17 +235,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         storeLocationThread.run();
     }
 
-    private void createAssociation(final Device device, final boolean addDevice){
+    private void storeDeviceInDb(final Device device){
         Thread storeDeviceThread = new Thread(){
             public void run(){
-                if(addDevice)
-                    databaseHelper.addDevice(device);
+                databaseHelper.addDevice(device);
+            }
+        };
 
+        storeDeviceThread.start();
+    }
+
+    private void createAssociation(final Device device){
+        Thread storeAssociationThread = new Thread(){
+            public void run(){
+                databaseHelper.addDevice(device);
                 databaseHelper.addAssociation();
             }
         };
 
-        storeDeviceThread.run();
+        storeAssociationThread.start();
     }
 
     private void addSinglePointToHeatMap(final Location locationToAdd) {
@@ -411,6 +419,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return super.parseNetworkResponse(response);
                 }
             }*/;
+            if(queue == null)
+                queue = Volley.newRequestQueue(MainActivity.this);
 
             queue.add(postRequest);
         }else{
@@ -446,26 +456,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Check intent action
             if(action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)){
                 //The Receiver is responsible for requesting another discovery scan
-                bluetoothAdapter.startDiscovery();
+                if(bluetoothAdapter.isDiscovering())
+                    bluetoothAdapter.startDiscovery();
             }else{
-                //We've got results! Prepare location
-                //Get a location
-                LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
-
-                //Get a date
-                Date locationDate = new Date();
-
-                //Create a Location object
-                Location location;
-                if (isSameLocation(locationCoordinates))
-                    //I'm in the same place, use the Location object contained in lastKnownLocation
-                    location = lastKnownLocation;
-                else{
-                    //I'm in a new spot, create a new Location object
-                    location = new Location(locationDate, locationCoordinates);
-                    storeLocationInDb(location);
-                }
-
                 //Time to check those results
                 if(action.equals(BluetoothDevice.ACTION_FOUND)){
                     //Bluetooth device
@@ -477,19 +470,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     String deviceClass = determineBtMajorDevice(btClass);
 
                     Device btDevice = new Device(btName, macAddress, deviceClass, DeviceType.BLUETOOTH);
-                    location.addFoundDevice(btDevice);
 
-                    boolean addDevice = false;
                     if(!databaseHelper.deviceExistsInDb(btDevice)){
-                        addDevice = true;
                         getManufacturerFromBssid(btDevice, btDevice.getBssid());
                         sessionResults++;
+                        storeDeviceInDb(btDevice);
                     }
-                    createAssociation(btDevice, addDevice);
 
                     discoveriesTextView.setText(String.valueOf(sessionResults));
+                    /*Toast.makeText(getApplicationContext(), "BTDevice added: " + btDevice.getBssid() + ", " + btDevice
+                            .getCharacteristics(), Toast.LENGTH_SHORT).show();
+                    Log.e("BTDevice", "BTDevice added: " + btDevice.getSsid() + ", " + btDevice.getCharacteristics());*/
                 }else{
                     //Wifi device
+                    //Get a location
+                    LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
+
+                    //Get a date
+                    Date locationDate = new Date();
+
+                    //Create a Location object
+                    Location location;
+                    if (isSameLocation(locationCoordinates))
+                        //I'm in the same place, use the Location object contained in lastKnownLocation
+                        location = lastKnownLocation;
+                    else{
+                        //I'm in a new spot, create a new Location object
+                        location = new Location(locationDate, locationCoordinates);
+                        storeLocationInDb(location);
+                    }
 
                     //Get the scan results
                     List<ScanResult> scanResultList = wifiManager.getScanResults();
@@ -501,29 +510,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         location.addFoundDevice(wifiDevice);
 
                         //Add the device to the database if and only if it doesn't exist in it
-                        Boolean addDevice = false;
                         if(!databaseHelper.deviceExistsInDb(wifiDevice)){
-                            addDevice = true;
                             getManufacturerFromBssid(wifiDevice, wifiDevice.getBssid());
                             sessionResults++;
                         }
-                        createAssociation(wifiDevice, addDevice);
+                        createAssociation(wifiDevice);
 
                         discoveriesTextView.setText(String.valueOf(sessionResults));
                         //Log.d("NEW DEVICE FOUND", "New device found!!");
+
+                        if(!isSameLocation(locationCoordinates))
+                            addSinglePointToHeatMap(location);
+
+                        //Map camera update
+                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+
+                        //The list of found devices must not transfer from one location to another
+                        location.getLocatedDevices().clear();
+
+                        lastKnownLocation = location;
                     }
                 }
-
-                if(!isSameLocation(locationCoordinates))
-                    addSinglePointToHeatMap(location);
-
-                //Map camera update
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
-
-                //The list of found devices must not transfer from one location to another
-                location.getLocatedDevices().clear();
-
-                lastKnownLocation = location;
             }
         }
 

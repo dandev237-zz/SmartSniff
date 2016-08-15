@@ -55,7 +55,7 @@ public class Utils {
         Date date = null;
         try {
             date = dateFormat.parse(stringDate);
-        } catch (ParseException e) {
+        } catch (ParseException | NullPointerException e) {
             //e.printStackTrace();
             date = new Date();
         }
