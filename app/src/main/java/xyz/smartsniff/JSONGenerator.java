@@ -43,7 +43,6 @@ public class JSONGenerator {
             e.printStackTrace();
         }
 
-
         return jsonObject;
     }
 
