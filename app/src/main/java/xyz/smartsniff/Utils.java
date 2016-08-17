@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
+import com.android.volley.RequestQueue;
 import com.google.android.gms.location.LocationRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,14 +24,21 @@ import java.util.Locale;
  */
 public class Utils {
 
+    public static final String MANUFACTURER_REQUEST_URL = "http://api.macvendors.com/";
+    public static final String MANUFACTURER_NOT_FOUND = "NotFound";
     public static final String PREFS_NAME = "SmartSniffPref";
     public static final String PREF_GPS_PRIORITY = "GPS Priority";
     public static final String PREF_SCAN_INTERVAL = "Scan Interval";
+    public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
     public static final int SCAN_INTERVAL_DEFAULT = 3000;
     public static final int GPS_PRIORITY_DEFAULT = LocationRequest.PRIORITY_HIGH_ACCURACY;
-    public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    public static final int HEATMAP_RADIUS = 40;
+    public static final int REQUEST_ENABLE_INTENT = 123;
+    public static final float ZOOM_LEVEL = 17.0f;
+    public static final double HEATMAP_OPACITY = 0.6;
 
     public static final Gson gson = new GsonBuilder().setDateFormat(Utils.DATE_FORMAT).disableHtmlEscaping().create();
+    public static RequestQueue queue;
 
     /**
      * Given a date, this function returns the date with the format "dd/MM/yyyy HH:mm:ss"

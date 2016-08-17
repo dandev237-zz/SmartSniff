@@ -65,24 +65,11 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
 
-    private static final float ZOOM_LEVEL = 17.0f;
-    private static final double HEATMAP_OPACITY = 0.6;
-    private static final int HEATMAP_RADIUS = 40;
-
-    private static final String MANUFACTURER_REQUEST_URL = "http://api.macvendors.com/";
-    private static final String MANUFACTURER_NOT_FOUND = "NotFound";
-
-    private static final int REQUEST_ENABLE_INTENT = 123;
-
-    private ProgressDialog progressDialog;
+    private MapManager mapManager;
 
     private TableLayout scanLayout;
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
-
-    private GoogleMap googleMap;
-    private HeatmapTileProvider provider;
-    private TileOverlay overlay;
 
     private SessionDatabaseHelper databaseHelper;
     private WifiManager wifiManager;
@@ -91,8 +78,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SharedPreferences preferences;
 
     private BluetoothAdapter bluetoothAdapter;
-
-    private RequestQueue queue;
 
     private Date startDate, endDate;
     private int sessionResults;
@@ -143,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     if(isBluetoothSupported && !bluetoothAdapter.isEnabled()){
                         Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_INTENT);
+                        startActivityForResult(enableBluetoothIntent, Utils.REQUEST_ENABLE_INTENT);
                     }
 
                     geoGPS.connect();
@@ -166,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     endDate = new Date();
 
                     databaseHelper.updateSession(Utils.formatDate(endDate));
-                    reloadHeatMapPoints(false);
+                    mapManager.reloadHeatMapPoints(false);
 
                     Toast.makeText(MainActivity.this, "Escaneo terminado. Hallazgos: " + sessionResults +
                             ".", Toast.LENGTH_SHORT).show();
@@ -259,42 +244,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         storeAssociationThread.start();
     }
 
-    private void addSinglePointToHeatMap(final Location locationToAdd) {
-        Thread addPointThread = new Thread(){
-            public void run(){
-                ArrayList<WeightedLatLng> data = new ArrayList<>();
 
-                WeightedLatLng locationLatLng = new WeightedLatLng(locationToAdd.getCoordinates(), locationToAdd.getNumOfLocatedDevices() * 1.0);
-                data.add(locationLatLng);
-
-                provider = new HeatmapTileProvider.Builder().weightedData(data)
-                        .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
-
-                overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-            }
-        };
-
-        addPointThread.run();
-    }
-
-    /**
-     * Used when it is necessary to reload the map
-     * @param firstLoad If it is the first time the app loads the map
-     */
-    private void reloadHeatMapPoints(Boolean firstLoad){
-        initializeProgressDialog(firstLoad);
-        progressDialog.show();
-        if(!firstLoad)
-            clearMap();
-
-        new LoadMapTask().execute();
-    }
-
-    private void clearMap() {
-        googleMap.clear();
-        overlay.remove();
-        overlay.clearTileCache();
-    }
 
     //Action bar
     //----------------------------------------------------------------------------------------------------------------------
@@ -361,7 +311,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     public void onClick(DialogInterface dialogInterface, int i) {
                         //Delete all database records
                         databaseHelper.deleteDatabase(MainActivity.this);
-                        clearMap();
+                        mapManager.clearMap();
                     }
                 })
                 .setNegativeButton(R.string.delete_alert_dialog_negative_button, new DialogInterface.OnClickListener() {
@@ -422,10 +372,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return super.parseNetworkResponse(response);
                 }
             }*/;
-            if(queue == null)
-                queue = Volley.newRequestQueue(MainActivity.this);
+            if(Utils.queue == null)
+                Utils.queue = Volley.newRequestQueue(MainActivity.this);
 
-            queue.add(postRequest);
+            Utils.queue.add(postRequest);
         }else{
             Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
                     .show();
@@ -437,12 +387,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //----------------------------------------------------------------------------------------------------------------------
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        CameraChangeListener listener = new CameraChangeListener();
-        googleMap.setOnCameraChangeListener(listener);
-        this.googleMap = googleMap;
-
-        //Load heatmap
-        reloadHeatMapPoints(true);
+        mapManager = new MapManager(googleMap, MainActivity.this);
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -475,7 +420,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Device btDevice = new Device(btName, macAddress, deviceClass, DeviceType.BLUETOOTH);
 
                     if(!databaseHelper.deviceExistsInDb(btDevice)){
-                        getManufacturerFromBssid(btDevice, btDevice.getBssid());
+                        btDevice.getManufacturerFromBssid(MainActivity.this, btDevice.getBssid());
                         sessionResults++;
                         storeDeviceInDb(btDevice);
                     }
@@ -514,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         //Add the device to the database if and only if it doesn't exist in it
                         if(!databaseHelper.deviceExistsInDb(wifiDevice)){
-                            getManufacturerFromBssid(wifiDevice, wifiDevice.getBssid());
+                            wifiDevice.getManufacturerFromBssid(MainActivity.this, wifiDevice.getBssid());
                             sessionResults++;
                         }
                         createAssociation(wifiDevice);
@@ -523,10 +468,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //Log.d("NEW DEVICE FOUND", "New device found!!");
 
                         if(!isSameLocation(locationCoordinates))
-                            addSinglePointToHeatMap(location);
+                            mapManager.addSinglePointToHeatMap(location);
 
                         //Map camera update
-                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location.getCoordinates(), ZOOM_LEVEL));
+                        mapManager.animateCamera(location.getCoordinates());
 
                         //The list of found devices must not transfer from one location to another
                         location.getLocatedDevices().clear();
@@ -585,125 +530,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return lastKnownLocation != null && lastKnownLocation.getCoordinates().equals(locationCoordinates);
         }
     }
-
-    /**
-     * Custom OnCameraChangeListener to react to the changes in zoom made by the user.
-     * @see <a href="https://developers.google.com/maps/documentation/android-api/views">
-     *     GOOGLE API Camera View Documentation</a>
-     */
-
-    private class CameraChangeListener implements GoogleMap.OnCameraChangeListener {
-        @Override
-        public void onCameraChange(CameraPosition cameraPosition) {
-            if(cameraPosition.zoom > ZOOM_LEVEL){
-                provider.setRadius((int) ((HEATMAP_RADIUS * cameraPosition.zoom)/ZOOM_LEVEL));
-                overlay.clearTileCache();
-                googleMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL));
-            }
-        }
-    }
-
-    /**
-     * Obtains the manufacturer of the ethernet/bluetooth card based on the MAC address of the device.
-     * This method is only called when the device must be associated with a particular location (i.e.
-     * the device hasn't been discovered yet) in order to minimize the number of requests sent to the
-     * API server.
-     *
-     * @see <a href="http://www.macvendors.com/api"> API Documentation</a>
-     * @see <a href="https://developer.android.com/training/volley/simple.html">Volley Documentation</a>
-     * @param bssid MAC Address
-     */
-    public void getManufacturerFromBssid(final Device device, final String bssid) {
-        //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
-        if(queue == null)
-            queue = Volley.newRequestQueue(MainActivity.this);
-
-        Thread requestManufacturerThread = new Thread(){
-            public void run(){
-                //http://api.macvendors.com/00:11:22:33:44:55
-                String url = MANUFACTURER_REQUEST_URL + bssid;
-
-                //Request a response from the provided URL
-                StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        //Get the manufacturer from the response string
-                        //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
-                        device.setManufacturer(response);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //Code 404 was received: no manufacturer found
-                        //Log.d(TAG, "MANUFACTURER NOT FOUND");
-                        device.setManufacturer(MANUFACTURER_NOT_FOUND);
-                    }
-                });
-                //Add the request to the queue
-                queue.add(request);
-            }
-        };
-
-        requestManufacturerThread.start();
-    }
-
-    //Loading Screen
-    //----------------------------------------------------------------------------------------------------------------------
-    private void initializeProgressDialog(Boolean firstLoad){
-        progressDialog = new ProgressDialog(MainActivity.this);
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        if(firstLoad)
-            progressDialog.setMessage("Cargando mapa de calor, espere por favor...");
-        else
-            progressDialog.setMessage("Actualizando mapa de calor, espere por favor...");
-        progressDialog.setCancelable(false);
-        progressDialog.setIndeterminate(false);
-    }
-
-    private class LoadMapTask extends AsyncTask<Void, Void, ArrayList<WeightedLatLng>>{
-
-        @Override
-        protected ArrayList<WeightedLatLng> doInBackground(Void... voids) {
-            ArrayList<WeightedLatLng> data;
-            synchronized (this){
-                //Show the progress dialog for a little while
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Map<Location, Integer> locationData;
-                databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
-                locationData = databaseHelper.selectLocationsForHeatmap();
-
-                data = new ArrayList<>();
-                for(Location loc: locationData.keySet()){
-                    WeightedLatLng locationToInsert = new WeightedLatLng(loc.getCoordinates(),
-                            locationData.get(loc));
-
-                    data.add(locationToInsert);
-                }
-
-            }
-            return data;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<WeightedLatLng> result){
-            //onPostExecute runs on the UI thread, so we cant paint the points on the map
-            paintPointsOnMap(result);
-
-            progressDialog.dismiss();
-        }
-    }
-
-    private void paintPointsOnMap(ArrayList<WeightedLatLng> points){
-        if(points.size() > 0) {
-            provider = new HeatmapTileProvider.Builder().weightedData(points)
-                    .radius(HEATMAP_RADIUS).opacity(HEATMAP_OPACITY).build();
-
-            overlay = googleMap.addTileOverlay(new TileOverlayOptions().tileProvider(provider));
-        }
-    }
-    //----------------------------------------------------------------------------------------------------------------------
 }

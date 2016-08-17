@@ -1,5 +1,6 @@
 package xyz.smartsniff;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.android.volley.Request;
@@ -33,6 +34,50 @@ public class Device {
             this.manufacturer = manufacturer;
 
         this.type = type;
+    }
+
+    /**
+     * Obtains the manufacturer of the ethernet/bluetooth card based on the MAC address of the device.
+     * This method is only called when the device must be associated with a particular location (i.e.
+     * the device hasn't been discovered yet) in order to minimize the number of requests sent to the
+     * API server.
+     *
+     * @see <a href="http://www.macvendors.com/api"> API Documentation</a>
+     * @see <a href="https://developer.android.com/training/volley/simple.html">Volley Documentation</a>
+     * @param bssid MAC Address
+     */
+    public void getManufacturerFromBssid(Activity mainActivity, final String bssid) {
+        //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
+        if(Utils.queue == null)
+            Utils.queue = Volley.newRequestQueue(mainActivity);
+
+        Thread requestManufacturerThread = new Thread(){
+            public void run(){
+                //http://api.macvendors.com/00:11:22:33:44:55
+                String url = Utils.MANUFACTURER_REQUEST_URL + bssid;
+
+                //Request a response from the provided URL
+                StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        //Get the manufacturer from the response string
+                        //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
+                        setManufacturer(response);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        //Code 404 was received: no manufacturer found
+                        //Log.d(TAG, "MANUFACTURER NOT FOUND");
+                        setManufacturer(Utils.MANUFACTURER_NOT_FOUND);
+                    }
+                });
+                //Add the request to the queue
+                Utils.queue.add(request);
+            }
+        };
+
+        requestManufacturerThread.start();
     }
 
     /**
