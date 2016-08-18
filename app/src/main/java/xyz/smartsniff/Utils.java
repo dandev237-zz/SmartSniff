@@ -1,18 +1,16 @@
 package xyz.smartsniff;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-
 import com.android.volley.RequestQueue;
 import com.google.android.gms.location.LocationRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.net.NetworkInterface;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -69,5 +67,40 @@ public class Utils {
         }
 
         return date;
+    }
+
+    /**
+     * This method returns the mac address of the Android device executing the application.
+     * Since Android 6.0 (Marshmallow), it is no longer possible to use "getConnectionInfo().getMacAddress()"
+     * to obtain the mac address. This workaround solves this problem.
+     *
+     * Reference: http://robinhenniges.com/en/android6-get-mac-address-programmatically
+     * This piece of code is freely available to use for any user (see reference for more license details)
+     * @return  The Mac Address of the Android device executing the application.
+     */
+    public static String getMacAddr() {
+        try {
+            List<NetworkInterface> all = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface nif : all) {
+                if (!nif.getName().equalsIgnoreCase("wlan0")) continue;
+
+                byte[] macBytes = nif.getHardwareAddress();
+                if (macBytes == null) {
+                    return "";
+                }
+
+                StringBuilder res1 = new StringBuilder();
+                for (byte b : macBytes) {
+                    res1.append(String.format("%02X:",b));
+                }
+
+                if (res1.length() > 0) {
+                    res1.deleteCharAt(res1.length() - 1);
+                }
+                return res1.toString();
+            }
+        } catch (Exception ex) {
+        }
+        return "02:00:00:00:00:00";
     }
 }

@@ -107,7 +107,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         String CREATE_DEVICES_TABLE = "CREATE TABLE " + TABLE_DEVICES +
                 "(" +
                 KEY_DEVICE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-                KEY_DEVICE_SSID + " TEXT," +
+                KEY_DEVICE_SSID + " TEXT NOT NULL," +
                 KEY_DEVICE_BSSID + " TEXT UNIQUE," +        //MAC ADDRESS
                 KEY_DEVICE_MANUFACTURER + " TEXT, " +
                 KEY_DEVICE_CHARACTERISTICS + " TEXT," +

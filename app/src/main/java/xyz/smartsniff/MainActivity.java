@@ -334,22 +334,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             List<Association> storedAssociations = databaseHelper.getAllAssociations();
 
             //Build a JSON object containing all the data
-            String myOwnDeviceAddress = wifiManager.getConnectionInfo().getMacAddress();
+            //String myOwnDeviceAddress = wifiManager.getConnectionInfo().getMacAddress();
+            String myOwnDeviceAddress = Utils.getMacAddr();
             JSONGenerator jsonGenerator = new JSONGenerator(myOwnDeviceAddress);
             JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedSessions, storedDevices, storedLocations,
                     storedAssociations);
 
             //Send it to the server using the RESTful API
-            String url = "";
+            String url = "http://192.168.1.201/api/db/storedata";
             //final int[] statusCode = new int[1];
             JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, localDataJSON,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            NetworkResponse netResponse = Utils.gson.fromJson(response.toString(), NetworkResponse.class);
-                            if(netResponse.statusCode == 201)
-                                Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
-                                        .show();
+                            Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
+                                    .show();
 
                             /*
                             if(statusCode[0] == 201)

@@ -26,7 +26,12 @@ public class Device {
     }
 
     public Device(String ssid, String bssid, String characteristics, String manufacturer, DeviceType type){
-        this.ssid = ssid;
+        //Null check to avoid violating the NOT-NULL restriction
+        //Usually we enter this check because we have found a bluetooth device with no friendly name
+        if(ssid == null)
+            this.ssid = "nameNotDefined";
+        else
+            this.ssid = ssid;
         this.bssid = bssid;
         this.characteristics = characteristics;
 

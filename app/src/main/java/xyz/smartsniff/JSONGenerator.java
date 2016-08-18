@@ -38,11 +38,11 @@ public class JSONGenerator {
             addDevicesToJSON(devices);
             addLocationsToJSON(locations);
             addAssociationsToJSON(associations);
+            System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
             e.printStackTrace();
         }
-
         return jsonObject;
     }
 
