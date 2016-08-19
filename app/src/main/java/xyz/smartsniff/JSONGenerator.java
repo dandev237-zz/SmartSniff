@@ -38,11 +38,17 @@ public class JSONGenerator {
          */
         try {
             buildJSON(associations);
-            System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
             e.printStackTrace();
         }
+
+        /*try {
+            System.out.println(jsonObject.toString(3));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }*/
+
         return jsonObject;
     }
 
@@ -83,11 +89,14 @@ public class JSONGenerator {
 
             JSONObject sessionJson = new JSONObject(Utils.gson.toJson(s));
             JSONObject deviceJson = new JSONObject(Utils.gson.toJson(d));
-            JSONObject locationJson = new JSONObject(Utils.gson.toJson(l));
 
             associationObject.put("session", sessionJson);
             associationObject.put("device", deviceJson);
-            associationObject.put("location", locationJson);
+
+            JSONObject locationCoordinates = new JSONObject();
+            locationCoordinates.put("latitude", l.getCoordinates().latitude);
+            locationCoordinates.put("longitude", l.getCoordinates().longitude);
+            associationObject.put("location", locationCoordinates);
 
             associationsArray.put(associationObject);
         }

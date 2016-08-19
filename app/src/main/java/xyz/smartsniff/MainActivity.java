@@ -329,11 +329,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         public void onResponse(JSONObject response) {
                             Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
                                     .show();
-                            /*
-                            if(statusCode[0] == 201)
-                                Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
-                                        .show();
-                             */
+
                         }
                     },
                     new Response.ErrorListener() {
@@ -342,14 +338,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Toast.makeText(MainActivity.this, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    })/*{
-
-                @Override
-                protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
-                    statusCode[0] = response.statusCode;
-                    return super.parseNetworkResponse(response);
-                }
-            }*/;
+                    });
             if(Utils.queue == null)
                 Utils.queue = Volley.newRequestQueue(MainActivity.this);
 
