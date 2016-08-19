@@ -1,12 +1,16 @@
 package xyz.smartsniff;
 
+import android.content.Context;
 import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Class responsible of generating and assembling a JSON object containing all the stored data in the local device
@@ -19,25 +23,21 @@ import java.util.List;
 public class JSONGenerator {
 
     private JSONObject jsonObject;
-    private String deviceHardwareAddress;
+    private SessionDatabaseHelper databaseHelper;
 
-    public JSONGenerator(String macAddress){
+    public JSONGenerator(Context context){
         jsonObject = new JSONObject();
-        deviceHardwareAddress = macAddress;
+        databaseHelper = SessionDatabaseHelper.getInstance(context);
     }
 
-    public JSONObject buildJsonObject(List<Session> sessions, List<Device> devices, List<Location> locations,
-                                      List<Association> associations) {
+    public JSONObject buildJsonObject(List<Association> associations) {
         /*
         JSON Structure:
         - 1 JSON Object (jsonObject), containing
             - 4 JSON Arrays, one for each model class (Session, Device, Location, Association)
          */
         try {
-            addSessionsToJSON(sessions);
-            addDevicesToJSON(devices);
-            addLocationsToJSON(locations);
-            addAssociationsToJSON(associations);
+            buildJSON(associations);
             System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
@@ -46,53 +46,73 @@ public class JSONGenerator {
         return jsonObject;
     }
 
-    private void addSessionsToJSON(List<Session> sessions) throws JSONException {
-        JSONArray sessionsArray = new JSONArray();
-        for(Session s: sessions){
-            s.setMacAddress(deviceHardwareAddress);
+    private void buildJSON(List<Association> associations) throws JSONException {
+        Map<Integer, Session> consideredSessions = new HashMap<>();
+        Map<Integer, Device> consideredDevices = new HashMap<>();
+        Map<Integer, Location> consideredLocations = new HashMap<>();
 
-            String sessionJson = Utils.gson.toJson(s);
-            JSONObject sessionObject = new JSONObject(sessionJson);
-
-            sessionsArray.put(sessionObject);
-        }
-
-        jsonObject.put("sessions", sessionsArray);
-    }
-
-    private void addDevicesToJSON(List<Device> devices) throws JSONException {
-        JSONArray devicesArray = new JSONArray();
-        for(Device d: devices){
-            String deviceJson = Utils.gson.toJson(d);
-            JSONObject deviceObject = new JSONObject(deviceJson);
-
-            devicesArray.put(deviceObject);
-        }
-
-        jsonObject.put("devices", devicesArray);
-    }
-
-    private void addLocationsToJSON(List<Location> locations) throws JSONException {
-        JSONArray locationsArray = new JSONArray();
-        for(Location l: locations){
-            String locationJson = Utils.gson.toJson(l);
-            JSONObject locationObject = new JSONObject(locationJson);
-
-            locationsArray.put(locationObject);
-        }
-
-        jsonObject.put("locations", locationsArray);
-    }
-
-    private void addAssociationsToJSON(List<Association> associations) throws JSONException {
         JSONArray associationsArray = new JSONArray();
         for(Association a: associations){
-            String associationJson = Utils.gson.toJson(a);
-            JSONObject associationObject = new JSONObject(associationJson);
+            Session s;
+            if(consideredSessions.containsKey(a.sessionId))
+                s = consideredSessions.get(a.sessionId);
+            else {
+                s = databaseHelper.getSession(a.sessionId);
+                //Add the device Mac Address to the Session object
+                s.setMacAddress(Utils.getMacAddr());
+                consideredSessions.put(a.sessionId, s);
+            }
+
+            Device d;
+            if(consideredDevices.containsKey(a.deviceId))
+                d = consideredDevices.get(a.deviceId);
+            else {
+                d = databaseHelper.getDevice(a.deviceId);
+                consideredDevices.put(a.deviceId, d);
+            }
+
+            Location l;
+            if(consideredLocations.containsKey(a.locationId))
+                l = consideredLocations.get(a.locationId);
+            else {
+                l = databaseHelper.getLocation(a.locationId);
+                consideredLocations.put(a.locationId, l);
+            }
+
+            JSONObject associationObject = new JSONObject();
+
+            JSONObject sessionJson = new JSONObject(Utils.gson.toJson(s));
+            JSONObject deviceJson = new JSONObject(Utils.gson.toJson(d));
+            JSONObject locationJson = new JSONObject(Utils.gson.toJson(l));
+
+            associationObject.put("session", sessionJson);
+            associationObject.put("device", deviceJson);
+            associationObject.put("location", locationJson);
 
             associationsArray.put(associationObject);
         }
 
+        JSONArray sessionsArray = new JSONArray();
+        for(Session s: consideredSessions.values()){
+            JSONObject sessionObject = new JSONObject(Utils.gson.toJson(s));
+            sessionsArray.put(sessionObject);
+        }
+
+        JSONArray devicesArray = new JSONArray();
+        for(Device d: consideredDevices.values()){
+            JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
+            devicesArray.put(deviceObject);
+        }
+
+        JSONArray locationsArray = new JSONArray();
+        for(Location l: consideredLocations.values()){
+            JSONObject locationObject = new JSONObject(Utils.gson.toJson(l));
+            locationsArray.put(locationObject);
+        }
+
+        jsonObject.put("sessions", sessionsArray);
+        jsonObject.put("devices", devicesArray);
+        jsonObject.put("locations", locationsArray);
         jsonObject.put("asocsessiondevices", associationsArray);
     }
 }

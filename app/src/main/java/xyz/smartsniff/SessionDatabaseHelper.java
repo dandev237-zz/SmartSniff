@@ -161,14 +161,13 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         try{
             ContentValues values = new ContentValues();
             values.put(KEY_SESSION_STARTDATE, session.getStartDateString());
-            //values.put(KEY_SESSION_ENDDATE, session.getEndDateString());
 
             long rowId = db.insertOrThrow(TABLE_SESSIONS, null, values);
             if(rowId > sessionId)           // 0 > -1
                 sessionId = rowId;
             db.setTransactionSuccessful();
         }catch(SQLException e){
-            //Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
+            Log.d("ADD SESSION TO DB", "ERROR WHILE ADDING A SESSION TO DB");
         }finally {
             db.endTransaction();
         }
@@ -177,17 +176,11 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     public void updateSession(String formattedEndDate){
         SQLiteDatabase db = getWritableDatabase();
 
-        db.beginTransaction();
-        try{
-            ContentValues values = new ContentValues();
-            values.put(KEY_SESSION_ENDDATE, formattedEndDate);
+        ContentValues values = new ContentValues();
+        values.put(KEY_SESSION_ENDDATE, formattedEndDate);
+        String[] args = new String[]{Long.toString(sessionId)};
 
-            db.update(TABLE_SESSIONS, values, KEY_SESSION_ID + "=" + sessionId, null);
-        }catch(SQLException e){
-            //Log.d("UPDATE SESSION", "ERROR WHILE UPDATING A SESSION");
-        }finally{
-            db.endTransaction();
-        }
+        db.update(TABLE_SESSIONS, values, KEY_SESSION_ID + " = ?", args);
     }
 
     public void addDevice (final Device device){
@@ -362,7 +355,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
      * Returns the number of sessions stored in this database.
      * @return
      */
-    public int selectSessions(){
+    public int getNumberOfSessions(){
         int numberOfSessions = 0;
 
         SQLiteDatabase db = getReadableDatabase();
@@ -385,102 +378,6 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     }
 
     //Querying methods
-
-    public List<Session> getAllSesions(){
-        List<Session> sessions = new LinkedList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = null;
-        db.beginTransaction();
-        try{
-            String selectQuery = "SELECT * FROM " + TABLE_SESSIONS;
-            cursor = db.rawQuery(selectQuery, null);
-            if(cursor.moveToFirst()){
-                do{
-                    Date startDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_STARTDATE)));
-                    Date endDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_ENDDATE)));
-
-                    Session queriedSession = new Session(startDate, endDate);
-                    sessions.add(queriedSession);
-                }while(cursor.moveToNext());
-            }
-        }catch(SQLException e){
-            Log.d("getAllSessions", "ERROR WHILE GETTING SESSIONS FROM DB");
-        }finally{
-            db.endTransaction();
-            if(cursor != null)
-                cursor.close();
-        }
-
-        return sessions;
-    }
-
-    public List<Location> getAllLocations(){
-        List<Location> locations = new LinkedList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = null;
-        db.beginTransaction();
-        try{
-            String selectQuery = "SELECT * FROM " + TABLE_LOCATIONS;
-            cursor = db.rawQuery(selectQuery, null);
-            if(cursor.moveToFirst()){
-                do{
-                    Date date = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_LOCATION_DATE)));
-                    String coordinatesString = cursor.getString(cursor.getColumnIndex(KEY_LOCATION_COORDINATES));
-
-                    //coordinates string format => "lat, long"
-                    String[] splitString = coordinatesString.trim().split(",");
-                    LatLng coordinates = new LatLng(Double.parseDouble(splitString[0]), Double.parseDouble(splitString[1]));
-
-                    Location queriedLocation = new Location(date, coordinates);
-                    locations.add(queriedLocation);
-                }while(cursor.moveToNext());
-            }
-        }catch(SQLException e){
-
-        }finally{
-            db.endTransaction();
-            if(cursor != null)
-                cursor.close();
-        }
-
-        return locations;
-    }
-
-    public List<Device> getAllDevices(){
-        List<Device> devices = new LinkedList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = null;
-        db.beginTransaction();
-        try{
-            String selectQuery = "SELECT * FROM " + TABLE_DEVICES;
-            cursor = db.rawQuery(selectQuery, null);
-            if(cursor.moveToFirst()){
-                do{
-                    String ssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_SSID));
-                    String bssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_BSSID));
-                    String characteristics = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHARACTERISTICS));
-                    String manufacturer = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MANUFACTURER));
-                    String typeString = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE));
-
-                    DeviceType type = DeviceType.valueOf(typeString);
-
-                    Device queriedDevice = new Device(ssid, bssid, characteristics, manufacturer, type);
-                    devices.add(queriedDevice);
-                }while(cursor.moveToNext());
-            }
-        }catch(SQLException e){
-
-        }finally{
-            db.endTransaction();
-            if(cursor != null)
-                cursor.close();
-        }
-
-        return devices;
-    }
 
     public List<Association> getAllAssociations(){
         List<Association> associations = new LinkedList<>();
@@ -510,6 +407,93 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
         }
 
         return associations;
+    }
+
+    public Session getSession(int id){
+        Session session = null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_SESSIONS + " WHERE " + KEY_SESSION_ID + "= " + id;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                Date startDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_STARTDATE)));
+                Date endDate = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_SESSION_ENDDATE)));
+
+                session = new Session(startDate, endDate);
+            }
+        }catch(SQLException e){
+            Log.d("getAllSessions", "ERROR WHILE GETTING SESSIONS FROM DB");
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return session;
+    }
+
+    public Location getLocation(int id){
+        Location location = null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_LOCATIONS + " WHERE " + KEY_SESSION_ID + "= " + id;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                Date date = Utils.reverseFormatDate(cursor.getString(cursor.getColumnIndex(KEY_LOCATION_DATE)));
+                String coordinatesString = cursor.getString(cursor.getColumnIndex(KEY_LOCATION_COORDINATES));
+
+                //coordinates string format => "lat, long"
+                String[] splitString = coordinatesString.trim().split(",");
+                LatLng coordinates = new LatLng(Double.parseDouble(splitString[0]), Double.parseDouble(splitString[1]));
+
+                location = new Location(date, coordinates);
+            }
+        }catch(SQLException e){
+
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return location;
+    }
+
+    public Device getDevice(int id){
+        Device device = null;
+
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT * FROM " + TABLE_DEVICES + " WHERE " + KEY_DEVICE_ID + "= " + id;
+            cursor = db.rawQuery(selectQuery, null);
+            if(cursor.moveToFirst()){
+                String ssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_SSID));
+                String bssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_BSSID));
+                String characteristics = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHARACTERISTICS));
+                String manufacturer = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MANUFACTURER));
+                String typeString = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE));
+
+                DeviceType type = DeviceType.valueOf(typeString);
+
+                device = new Device(ssid, bssid, characteristics, manufacturer, type);
+            }
+        }catch(SQLException e){
+
+        }finally{
+            db.endTransaction();
+            if(cursor != null)
+                cursor.close();
+        }
+
+        return device;
     }
 
 }

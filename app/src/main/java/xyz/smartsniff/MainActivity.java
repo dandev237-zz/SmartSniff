@@ -1,6 +1,5 @@
 package xyz.smartsniff;
 
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -12,7 +11,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,31 +26,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.maps.android.heatmaps.HeatmapTileProvider;
-import com.google.maps.android.heatmaps.WeightedLatLng;
 
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Main activity of the application. Contains the scanning interface and the
@@ -280,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
-            if(databaseHelper.selectSessions() > 0)
+            if(databaseHelper.getNumberOfSessions() > 0)
                 showDeleteAlertDialog();
             else
                 Toast.makeText(MainActivity.this, "ERROR: No hay datos que borrar", Toast.LENGTH_SHORT)
@@ -326,30 +313,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void sendDataToServer(){
-        if(databaseHelper.selectSessions() > 0){
-            //Collect all the stored data
-            List<Session> storedSessions = databaseHelper.getAllSesions();
-            List<Device> storedDevices = databaseHelper.getAllDevices();
-            List<Location> storedLocations = databaseHelper.getAllLocations();
+        if(databaseHelper.getNumberOfSessions() > 0){
+            //Collect all the associations data
             List<Association> storedAssociations = databaseHelper.getAllAssociations();
 
             //Build a JSON object containing all the data
-            //String myOwnDeviceAddress = wifiManager.getConnectionInfo().getMacAddress();
-            String myOwnDeviceAddress = Utils.getMacAddr();
-            JSONGenerator jsonGenerator = new JSONGenerator(myOwnDeviceAddress);
-            JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedSessions, storedDevices, storedLocations,
-                    storedAssociations);
+            JSONGenerator jsonGenerator = new JSONGenerator(MainActivity.this);
+            JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedAssociations);
 
             //Send it to the server using the RESTful API
             String url = "http://192.168.1.201/api/db/storedata";
-            //final int[] statusCode = new int[1];
             JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, localDataJSON,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
                             Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
                                     .show();
-
                             /*
                             if(statusCode[0] == 201)
                                 Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
