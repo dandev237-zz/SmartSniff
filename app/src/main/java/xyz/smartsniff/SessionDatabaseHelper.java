@@ -264,6 +264,18 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         }catch(SQLException e){
             //Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
+            //The error is caused because the location already exists in the database.
+            //We need to get the ID of such location.
+            String[] fields = new String[]{KEY_LOCATION_COORDINATES};
+            String[] args = new String[]{location.getCoordinatesString()};
+
+            Cursor c = db.query(TABLE_LOCATIONS, fields, KEY_LOCATION_COORDINATES + "=?", args, null, null, null);
+            //Check if there is at least one result
+            if(c.moveToFirst()){
+                locationId = c.getInt(c.getColumnIndex(KEY_LOCATION_ID));
+            }
+            c.close();
+            db.setTransactionSuccessful();
         }finally {
             db.endTransaction();
         }
