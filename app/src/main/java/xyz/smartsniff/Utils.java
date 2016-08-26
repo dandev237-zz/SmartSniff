@@ -16,9 +16,9 @@ import java.util.Locale;
 /**
  * Class with methods used across the app.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 30/06/2016
+ * Date: 30/06/2016
  */
 public class Utils {
 

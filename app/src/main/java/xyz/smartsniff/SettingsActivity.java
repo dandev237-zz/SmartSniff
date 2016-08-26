@@ -14,10 +14,10 @@ import com.google.android.gms.location.LocationRequest;
 
 /**
  * Settings activity. Contains the configuration options available to the user.
- * <p/>
- * Autor: Daniel Castro García
+ *
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 17/07/2016
+ * Date: 17/07/2016
  */
 public class SettingsActivity extends AppCompatActivity {
 

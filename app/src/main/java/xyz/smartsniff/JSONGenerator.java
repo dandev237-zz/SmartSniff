@@ -8,26 +8,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Class responsible of generating and assembling a JSON object containing all the stored data in the local device
+ * Class responsible for generating and assembling a JSON object containing all the stored data in the local device
  * database.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 14/08/2016
+ * Date: 14/08/2016
  */
 public class JSONGenerator {
 
     private JSONObject jsonObject;
-    private SessionDatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
 
     public JSONGenerator(Context context){
         jsonObject = new JSONObject();
-        databaseHelper = SessionDatabaseHelper.getInstance(context);
+        databaseHelper = DatabaseHelper.getInstance(context);
     }
 
     public JSONObject buildJsonObject(List<Association> associations) {

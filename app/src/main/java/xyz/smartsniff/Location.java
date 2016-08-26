@@ -8,9 +8,9 @@ import java.util.LinkedList;
 /**
  * Model class to represent locations.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 30/06/2016
+ * Date: 30/06/2016
  */
 public class Location {
 

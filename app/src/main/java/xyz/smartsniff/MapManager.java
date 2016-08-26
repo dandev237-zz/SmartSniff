@@ -17,11 +17,11 @@ import java.util.ArrayList;
 import java.util.Map;
 
 /**
- * Insert class description here
- * <p>
- * Autor: Daniel Castro García
+ * Class with all the map-related functionality.
+ *
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 17/08/2016
+ * Date: 17/08/2016
  */
 public class MapManager {
 
@@ -31,7 +31,7 @@ public class MapManager {
 
     private Activity mainActivity;
     private ProgressDialog progressDialog;
-    private SessionDatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
 
     public MapManager (GoogleMap googleMap, Activity mainActivity){
         this.googleMap = googleMap;
@@ -105,7 +105,7 @@ public class MapManager {
                     e.printStackTrace();
                 }
                 Map<Location, Integer> locationData;
-                databaseHelper = SessionDatabaseHelper.getInstance(mainActivity);
+                databaseHelper = DatabaseHelper.getInstance(mainActivity);
                 locationData = databaseHelper.selectLocationsForHeatmap();
 
                 data = new ArrayList<>();

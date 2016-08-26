@@ -29,7 +29,6 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 /**
  * Implementation of a geolocation method using Google Play Services API.
  *
- * <p/>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 16/05/2016

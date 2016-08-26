@@ -5,9 +5,9 @@ import java.util.Date;
 /**
  * Model class to represent sessions.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 30/06/2016
+ * Date: 30/06/2016
  */
 public class Session {
 

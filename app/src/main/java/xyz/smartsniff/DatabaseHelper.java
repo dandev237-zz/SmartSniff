@@ -20,16 +20,16 @@ import java.util.Map;
 /**
  * This class handles database operations such as reading, writing and upgrading.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 30/06/2016
+ * Date: 30/06/2016
  */
-public class SessionDatabaseHelper extends SQLiteOpenHelper {
+public class DatabaseHelper extends SQLiteOpenHelper {
 
     private long sessionId = 0, deviceId = 0, locationId = 0;
 
     //Singleton instance
-    private static SessionDatabaseHelper singletonInstance;
+    private static DatabaseHelper singletonInstance;
 
     //Database info
     private static final String DATABASE_NAME = "sessionsDatabase";
@@ -67,17 +67,17 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
     /*
     * Singleton pattern
     * In order to access the database connection:
-    * SessionDatabaseHelper dbHelper = SessionDatabaseHelper.getInstance(this);
+    * DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
     */
-    public static synchronized SessionDatabaseHelper getInstance(Context context){
+    public static synchronized DatabaseHelper getInstance(Context context){
         if (singletonInstance == null){
-            singletonInstance = new SessionDatabaseHelper(context.getApplicationContext());
+            singletonInstance = new DatabaseHelper(context.getApplicationContext());
         }
         return singletonInstance;
     }
 
     //Constructor is private to prevent direct instantiation
-    private SessionDatabaseHelper(Context context){
+    private DatabaseHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
@@ -411,7 +411,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 }while(cursor.moveToNext());
             }
         }catch(SQLException e){
-
+            Log.d("getAllAssociations", "ERROR WHILE GETTING ASSOCIATIONS FROM DB");
         }finally{
             db.endTransaction();
             if(cursor != null)
@@ -437,7 +437,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 session = new Session(startDate, endDate);
             }
         }catch(SQLException e){
-            Log.d("getAllSessions", "ERROR WHILE GETTING SESSIONS FROM DB");
+            Log.d("getSession", "ERROR WHILE GETTING SESSION FROM DB");
         }finally{
             db.endTransaction();
             if(cursor != null)
@@ -467,7 +467,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 location = new Location(date, coordinates);
             }
         }catch(SQLException e){
-
+            Log.d("getLocation", "ERROR WHILE GETTING LOCATION FROM DB");
         }finally{
             db.endTransaction();
             if(cursor != null)
@@ -498,7 +498,7 @@ public class SessionDatabaseHelper extends SQLiteOpenHelper {
                 device = new Device(ssid, bssid, characteristics, manufacturer, type);
             }
         }catch(SQLException e){
-
+            Log.d("getDevice", "ERROR WHILE GETTING DEVICE FROM DB");
         }finally{
             db.endTransaction();
             if(cursor != null)

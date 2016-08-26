@@ -13,9 +13,9 @@ import com.android.volley.toolbox.Volley;
 /**
  * Model class to represent devices.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 30/06/2016
+ * Date: 30/06/2016
  */
 public class Device {
     private String ssid, bssid, characteristics, manufacturer;

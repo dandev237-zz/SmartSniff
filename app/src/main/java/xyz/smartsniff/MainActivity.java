@@ -44,10 +44,10 @@ import java.util.List;
 /**
  * Main activity of the application. Contains the scanning interface and the
  * appbar.
- * <p/>
- * Autor: Daniel Castro García
+ *
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 29/06/2016
+ * Date: 29/06/2016
  */
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ToggleButton scanButton;
     private TextView discoveriesTextView, initDateTextView;
 
-    private SessionDatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
     private WifiManager wifiManager;
     private CustomReceiver receiver;
     private GeolocationGPS geoGPS;
@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         initDateTextView = (TextView) findViewById(R.id.initDateTextView);
         scanLayout.setVisibility(View.INVISIBLE);
 
-        databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
+        databaseHelper = DatabaseHelper.getInstance(MainActivity.this);
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -252,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        databaseHelper = SessionDatabaseHelper.getInstance(MainActivity.this);
+        databaseHelper = DatabaseHelper.getInstance(MainActivity.this);
 
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long

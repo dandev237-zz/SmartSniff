@@ -3,9 +3,9 @@ package xyz.smartsniff;
 /**
  * Model class to represent a stored association between a session, a location, and a device in the local database.
  *
- * Autor: Daniel Castro García
+ * Author: Daniel Castro García
  * Email: dandev237@gmail.com
- * Fecha: 14/08/2016
+ * Date: 14/08/2016
  */
 public class Association {
 
