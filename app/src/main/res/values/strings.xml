@@ -9,14 +9,6 @@
     <string name="init_date">Fecha de inicio:</string>
     <string name="discoveries">Nº. hallazgos:</string>
 
-    <!-- Strings related to Settings -->
-
-    <!-- Example General settings -->
-
-    <!-- Example settings for Data & Sync -->
-
-    <!-- Example settings for Notifications -->
-
     <string name="energy_saving_text">Modo ahorro de batería</string>
     <string name="energy_saving_explanation">Si activa el modo ahorro de energía, el teléfono obtendrá la localización del dispositivo a través de Internet, en lugar del GPS.</string>
     <string name="interval_text">Intervalo de escaneo</string>

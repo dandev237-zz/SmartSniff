@@ -64,7 +64,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_ASSOCIATION_ID_DEVICE_FK = "idDevice";
     private static final String KEY_ASSOCIATION_ID_LOCATION_FK = "idLocation";
 
-    /*
+    /**
     * Singleton pattern
     * In order to access the database connection:
     * DatabaseHelper dbHelper = DatabaseHelper.getInstance(this);
@@ -81,7 +81,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    /*
+    /**
      * Configures database settings. Called when the database connection
      * is being configured.
      */
@@ -91,7 +91,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.setForeignKeyConstraintsEnabled(true);
     }
 
-    /*
+    /**
      * Creates the database for the first time. If it already exists, this
      * method will not be called.
      */
@@ -136,7 +136,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(CREATE_ASSOCIATION_TABLE);
     }
 
-    /*
+    /**
      * Called when the database needs to be upgraded (i.e. the database already
      * exists and the version is different from the version of the database that
      * exists in memory).
@@ -504,8 +504,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if(cursor != null)
                 cursor.close();
         }
-
         return device;
+
     }
 
 }

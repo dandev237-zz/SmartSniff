@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -38,6 +39,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.List;
 
@@ -170,9 +172,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void run() {
                 try {
                     //The scan will begin after an interval of time
-                    //Log.d("SCANNING THREAD", "SLEEP");
                     Thread.sleep(interval);
-                    //Log.d("SCANNING THREAD", "NO SLEEP");
                 } catch (InterruptedException e) {
                     Log.d("SCANNING THREAD", "SCAN HAS BEEN INTERRUPTED");
                 }
@@ -183,7 +183,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     long delay = scanTime - lastScanTime;
 
                     if (delay >= interval) {
-                        //Log.d("STARTSCAN", "STARTING SCAN AT TIME " + scanTime);
                         wifiManager.startScan();
                         lastScanTime = scanTime;
                     }
@@ -260,12 +259,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        /*if(id == R.id.action_update_map){
-            Log.d("AppBar Update Map", "APPBAR: UPDATE MAP BUTTON PRESSED");
-            reloadHeatMapPoints(false);
-        }*/
-
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
             if(databaseHelper.getNumberOfSessions() > 0)
@@ -323,14 +316,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedAssociations);
 
             //Send it to the server using the RESTful API
-            String url = "http://192.168.1.201/api/db/storedata";
+            String url = "http://192.168.1.199:5000/api/db/storedata";
             JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, localDataJSON,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            Toast.makeText(MainActivity.this, "Datos enviados con éxito", Toast.LENGTH_SHORT)
+                            Toast.makeText(MainActivity.this, "Datos enviados", Toast.LENGTH_SHORT)
                                     .show();
-
                         }
                     },
                     new Response.ErrorListener() {
@@ -339,7 +331,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Toast.makeText(MainActivity.this, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
                                     .show();
                         }
-                    });
+                    }) {
+
+                //Workaround for dealing with empty response
+                //Reference: http://stackoverflow.com/a/24566878
+                @Override
+                protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
+                    try{
+                        if(response.data.length == 0){
+                            if (response.data.length == 0) {
+                                byte[] responseData = "{}".getBytes("UTF8");
+                                response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
+                            }
+                        }
+                    }catch(UnsupportedEncodingException e){
+                        e.printStackTrace();
+                    }
+                    return super.parseNetworkResponse(response);
+                }
+
+            };
             if(Utils.queue == null)
                 Utils.queue = Volley.newRequestQueue(MainActivity.this);
 
@@ -348,6 +359,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
                     .show();
         }
+
+
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -394,9 +407,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                     discoveriesTextView.setText(String.valueOf(sessionResults));
-                    /*Toast.makeText(getApplicationContext(), "BTDevice added: " + btDevice.getBssid() + ", " + btDevice
-                            .getCharacteristics(), Toast.LENGTH_SHORT).show();
-                    Log.e("BTDevice", "BTDevice added: " + btDevice.getSsid() + ", " + btDevice.getCharacteristics());*/
                 }else{
                     //Wifi device
                     //Get a location
@@ -433,7 +443,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         createAssociation(wifiDevice);
 
                         discoveriesTextView.setText(String.valueOf(sessionResults));
-                        //Log.d("NEW DEVICE FOUND", "New device found!!");
 
                         if(!isSameLocation(locationCoordinates))
                             mapManager.addSinglePointToHeatMap(location);
