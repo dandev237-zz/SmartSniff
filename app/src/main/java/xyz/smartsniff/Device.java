@@ -1,10 +1,8 @@
 package xyz.smartsniff;
 
 import android.app.Activity;
-import android.content.Context;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
@@ -49,40 +47,35 @@ public class Device {
      *
      * @see <a href="http://www.macvendors.com/api"> API Documentation</a>
      * @see <a href="https://developer.android.com/training/volley/simple.html">Volley Documentation</a>
-     * @param bssid MAC Address
      */
-    public void getManufacturerFromBssid(Activity mainActivity, final String bssid) {
+    public void getManufacturerFromBssid(Activity mainActivity) {
         //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
         if(Utils.queue == null)
             Utils.queue = Volley.newRequestQueue(mainActivity);
 
-        Thread requestManufacturerThread = new Thread(){
-            public void run(){
-                //http://api.macvendors.com/00:11:22:33:44:55
-                String url = Utils.MANUFACTURER_REQUEST_URL + bssid;
+        final DatabaseHelper dbHelper = DatabaseHelper.getInstance(mainActivity);
 
-                //Request a response from the provided URL
-                StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        //Get the manufacturer from the response string
-                        //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
-                        setManufacturer(response);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //Code 404 was received: no manufacturer found
-                        //Log.d(TAG, "MANUFACTURER NOT FOUND");
-                        setManufacturer(Utils.MANUFACTURER_NOT_FOUND);
-                    }
-                });
-                //Add the request to the queue
-                Utils.queue.add(request);
+        //http://api.macvendors.com/00:11:22:33:44:55
+        String url = Utils.MANUFACTURER_REQUEST_URL + getBssid();
+
+        //Request a response from the provided URL
+        StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                //Get the manufacturer from the response string
+                //Log.d(TAG, "MANUFACTURER RECEIVED SUCCESSFULLY: " + manufacturer);
+                setManufacturer(response, dbHelper);
             }
-        };
-
-        requestManufacturerThread.start();
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                //Code 404 was received: no manufacturer found
+                //Log.d(TAG, "MANUFACTURER NOT FOUND");
+                setManufacturer(Utils.MANUFACTURER_NOT_FOUND, dbHelper);
+            }
+        });
+        //Add the request to the queue
+        Utils.queue.add(request);
     }
 
     /**
@@ -135,8 +128,9 @@ public class Device {
         return manufacturer;
     }
 
-    public void setManufacturer(String manufacturer) {
-        this.manufacturer = manufacturer;
+    private void setManufacturer(String response, DatabaseHelper dbHelper) {
+        this.manufacturer = response;
+        dbHelper.updateDeviceWithManufacturer(this);
     }
 
     public DeviceType getType() {

@@ -196,7 +196,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_DEVICE_CHARACTERISTICS, device.getCharacteristics());
             values.put(KEY_DEVICE_TYPE, device.getType().toString());
 
-
             long rowId = db.insertOrThrow(TABLE_DEVICES, null, values);
             if(rowId > deviceId)            // 0 > -1
                 deviceId = rowId;
@@ -220,6 +219,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if(c != null)
                 c.close();
         }
+    }
+
+    public void updateDeviceWithManufacturer(Device device){
+        SQLiteDatabase db = getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(KEY_DEVICE_MANUFACTURER, device.getManufacturer());
+        String[] args = new String[]{device.getBssid()};
+
+        db.update(TABLE_DEVICES, values, KEY_DEVICE_BSSID + " = ?", args);
     }
 
     public boolean deviceExistsInDb(Device device){

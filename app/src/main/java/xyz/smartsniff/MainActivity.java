@@ -26,20 +26,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 
-import org.json.JSONObject;
-
-import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.List;
 
@@ -308,59 +299,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void sendDataToServer(){
         if(databaseHelper.getNumberOfSessions() > 0){
-            //Collect all the associations data
-            List<Association> storedAssociations = databaseHelper.getAllAssociations();
-
-            //Build a JSON object containing all the data
             JSONGenerator jsonGenerator = new JSONGenerator(MainActivity.this);
-            JSONObject localDataJSON = jsonGenerator.buildJsonObject(storedAssociations);
-
-            //Send it to the server using the RESTful API
-            String url = "http://192.168.1.199:5000/api/db/storedata";
-            JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, localDataJSON,
-                    new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            Toast.makeText(MainActivity.this, "Datos enviados", Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    },
-                    new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Toast.makeText(MainActivity.this, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
-                                    .show();
-                        }
-                    }) {
-
-                //Workaround for dealing with empty response
-                //Reference: http://stackoverflow.com/a/24566878
-                @Override
-                protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
-                    try{
-                        if(response.data.length == 0){
-                            if (response.data.length == 0) {
-                                byte[] responseData = "{}".getBytes("UTF8");
-                                response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
-                            }
-                        }
-                    }catch(UnsupportedEncodingException e){
-                        e.printStackTrace();
-                    }
-                    return super.parseNetworkResponse(response);
-                }
-
-            };
-            if(Utils.queue == null)
-                Utils.queue = Volley.newRequestQueue(MainActivity.this);
-
-            Utils.queue.add(postRequest);
+            jsonGenerator.sendJSONToServer();
         }else{
             Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
                     .show();
         }
-
-
     }
     //----------------------------------------------------------------------------------------------------------------------
 
@@ -401,9 +345,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Device btDevice = new Device(btName, macAddress, deviceClass, DeviceType.BLUETOOTH);
 
                     if(!databaseHelper.deviceExistsInDb(btDevice)){
-                        btDevice.getManufacturerFromBssid(MainActivity.this, btDevice.getBssid());
-                        sessionResults++;
                         storeDeviceInDb(btDevice);
+                        btDevice.getManufacturerFromBssid(MainActivity.this);
+                        sessionResults++;
                     }
 
                     discoveriesTextView.setText(String.valueOf(sessionResults));
@@ -437,10 +381,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         //Add the device to the database if and only if it doesn't exist in it
                         if(!databaseHelper.deviceExistsInDb(wifiDevice)){
-                            wifiDevice.getManufacturerFromBssid(MainActivity.this, wifiDevice.getBssid());
+                            createAssociation(wifiDevice);
+                            wifiDevice.getManufacturerFromBssid(MainActivity.this);
                             sessionResults++;
                         }
-                        createAssociation(wifiDevice);
 
                         discoveriesTextView.setText(String.valueOf(sessionResults));
 

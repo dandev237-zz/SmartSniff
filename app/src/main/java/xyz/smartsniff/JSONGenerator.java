@@ -1,12 +1,21 @@
 package xyz.smartsniff;
 
-import android.content.Context;
+import android.app.Activity;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,35 +32,81 @@ public class JSONGenerator {
 
     private JSONObject jsonObject;
     private DatabaseHelper databaseHelper;
+    private Activity mainActivity;
 
-    public JSONGenerator(Context context){
-        jsonObject = new JSONObject();
+    public JSONGenerator(Activity context){
+        this.mainActivity = context;
         databaseHelper = DatabaseHelper.getInstance(context);
     }
 
-    public JSONObject buildJsonObject(List<Association> associations) {
-        /*
-        JSON Structure:
-        - 1 JSON Object (jsonObject), containing
-            - 4 JSON Arrays, one for each model class (Session, Device, Location, Association)
-         */
+    public void sendJSONToServer(){
+        jsonObject = new JSONObject();
+        jsonObject = prepareJsonObject();
+
+        //Send the JSON object to the server using the RESTful API
+        String url = "http://192.168.1.199:5000/api/db/storedata";
+        JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Toast.makeText(mainActivity, "Datos enviados", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(mainActivity, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                }) {
+
+            //Workaround for dealing with empty response
+            //Reference: http://stackoverflow.com/a/24566878
+            @Override
+            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
+                try{
+                    if(response.data.length == 0){
+                        if (response.data.length == 0) {
+                            byte[] responseData = "{}".getBytes("UTF8");
+                            response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
+                        }
+                    }
+                }catch(UnsupportedEncodingException e){
+                    e.printStackTrace();
+                }
+                return super.parseNetworkResponse(response);
+            }
+
+        };
+        if(Utils.queue == null)
+            Utils.queue = Volley.newRequestQueue(mainActivity);
+
+        Utils.queue.add(postRequest);
+    }
+
+    private JSONObject prepareJsonObject() {
+        //Collect all the associations data
+        List<Association> associations = databaseHelper.getAllAssociations();
+
         try {
+            //Build a JSON object containing all the data
             buildJSON(associations);
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
             e.printStackTrace();
         }
 
-        /*try {
-            System.out.println(jsonObject.toString(3));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }*/
-
         return jsonObject;
     }
 
     private void buildJSON(List<Association> associations) throws JSONException {
+        /*
+        JSON Structure:
+        - 1 JSON Object (jsonObject), containing
+            - 4 JSON Arrays, one for each model class (Session, Device, Location, Association)
+         */
+
         Map<Integer, Session> consideredSessions = new HashMap<>();
         Map<Integer, Device> consideredDevices = new HashMap<>();
         Map<Integer, Location> consideredLocations = new HashMap<>();
