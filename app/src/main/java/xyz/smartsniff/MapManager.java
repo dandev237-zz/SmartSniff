@@ -68,6 +68,7 @@ public class MapManager {
      */
     public void reloadHeatMapPoints(Boolean firstLoad){
         initializeProgressDialog(firstLoad);
+        //Show a loading screen
         progressDialog.show();
         if(!firstLoad)
             clearMap();
@@ -92,6 +93,10 @@ public class MapManager {
         progressDialog.setIndeterminate(false);
     }
 
+    /**
+     * This method is responsible for the reloading of the heatmap displayed in the main interface
+     * of the application.
+     */
     private class LoadMapTask extends AsyncTask<Void, Void, ArrayList<WeightedLatLng>> {
 
         @Override
@@ -122,9 +127,10 @@ public class MapManager {
 
         @Override
         protected void onPostExecute(ArrayList<WeightedLatLng> result){
-            //onPostExecute runs on the UI thread, so we cant paint the points on the map
+            //onPostExecute runs on the UI thread, so we can paint the points on the map
             paintPointsOnMap(result);
 
+            //Dismiss the loading screen
             progressDialog.dismiss();
         }
     }

@@ -1,6 +1,8 @@
 package xyz.smartsniff;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,62 +31,32 @@ import java.util.Map;
  * Date: 14/08/2016
  */
 public class JSONGenerator {
-
     private JSONObject jsonObject;
     private DatabaseHelper databaseHelper;
     private Activity mainActivity;
+
+    private ProgressDialog progressDialog;
 
     public JSONGenerator(Activity context){
         this.mainActivity = context;
         databaseHelper = DatabaseHelper.getInstance(context);
     }
 
+    /**
+     * Method which starts the data sending procedure.
+     */
     public void sendJSONToServer(){
-        jsonObject = new JSONObject();
-        jsonObject = prepareJsonObject();
+        initializeProgressDialog();
+        progressDialog.show();
 
-        //Send the JSON object to the server using the RESTful API
-        String url = "http://192.168.1.199:5000/api/db/storedata";
-        JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Toast.makeText(mainActivity, "Datos enviados", Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(mainActivity, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                }) {
-
-            //Workaround for dealing with empty response
-            //Reference: http://stackoverflow.com/a/24566878
-            @Override
-            protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
-                try{
-                    if(response.data.length == 0){
-                        if (response.data.length == 0) {
-                            byte[] responseData = "{}".getBytes("UTF8");
-                            response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
-                        }
-                    }
-                }catch(UnsupportedEncodingException e){
-                    e.printStackTrace();
-                }
-                return super.parseNetworkResponse(response);
-            }
-
-        };
-        if(Utils.queue == null)
-            Utils.queue = Volley.newRequestQueue(mainActivity);
-
-        Utils.queue.add(postRequest);
+        new SendDataTask().execute();
     }
 
+    /**
+     * This method prepares the JSON object to be included in the HTTP Post request
+     * that will send it to the external database.
+     * @return  The complete JSON object.
+     */
     private JSONObject prepareJsonObject() {
         //Collect all the associations data
         List<Association> associations = databaseHelper.getAllAssociations();
@@ -100,6 +72,12 @@ public class JSONGenerator {
         return jsonObject;
     }
 
+    /**
+     * Method responsible for getting the data from the local database to serialize it. Such data will then
+     * be used to populate a JSON object.
+     * @param associations  All the associations stored in the local database
+     * @throws JSONException
+     */
     private void buildJSON(List<Association> associations) throws JSONException {
         /*
         JSON Structure:
@@ -177,5 +155,78 @@ public class JSONGenerator {
         jsonObject.put("devices", devicesArray);
         jsonObject.put("locations", locationsArray);
         jsonObject.put("asocsessiondevices", associationsArray);
+    }
+
+    private void initializeProgressDialog(){
+        progressDialog = new ProgressDialog(mainActivity);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressDialog.setMessage("Enviando datos al servidor...");
+        progressDialog.setCancelable(false);
+        progressDialog.setIndeterminate(false);
+    }
+
+    /**
+     * This AsyncTask is responsible for the creation of the JSON object, the HTTP Post
+     * request which will contain it, and its response.
+     */
+    private class SendDataTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            synchronized (this) {
+                //Populate the JSON object with the data contained in the local database
+                jsonObject = new JSONObject();
+                jsonObject = prepareJsonObject();
+
+                //Send the JSON object to the server using the RESTful API
+                String url = "http://192.168.1.199:5000/api/db/storedata";
+                JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                Toast.makeText(mainActivity, "Datos enviados", Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        },
+                        new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Toast.makeText(mainActivity, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        }) {
+
+                    //Workaround for dealing with empty response
+                    //Reference: http://stackoverflow.com/a/24566878
+                    @Override
+                    protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
+                        try{
+                            if(response.data.length == 0){
+                                if (response.data.length == 0) {
+                                    byte[] responseData = "{}".getBytes("UTF8");
+                                    response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
+                                }
+                            }
+                        }catch(UnsupportedEncodingException e){
+                            e.printStackTrace();
+                        }
+                        return super.parseNetworkResponse(response);
+                    }
+
+                };
+                if(Utils.queue == null)
+                    Utils.queue = Volley.newRequestQueue(mainActivity);
+
+                Utils.queue.add(postRequest);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v){
+            //Dismiss the loading screen
+            progressDialog.dismiss();
+        }
     }
 }
