@@ -33,7 +33,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     //Database info
     private static final String DATABASE_NAME = "sessionsDatabase";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 4;
 
     //Table Names
     private static final String TABLE_SESSIONS = "sessions";
@@ -52,6 +52,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_DEVICE_BSSID = "bssid";
     private static final String KEY_DEVICE_MANUFACTURER = "manufacturer";
     private static final String KEY_DEVICE_CHARACTERISTICS = "characteristics";
+    private static final String KEY_DEVICE_CHANNELWIDTH = "channelWidth";
+    private static final String KEY_DEVICE_FREQUENCY = "frequency";
+    private static final String KEY_DEVICE_INTENSITY = "signalIntensity";
     private static final String KEY_DEVICE_TYPE = "type";
 
     //Location Table Columns
@@ -111,6 +114,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 KEY_DEVICE_BSSID + " TEXT UNIQUE," +        //MAC ADDRESS
                 KEY_DEVICE_MANUFACTURER + " TEXT, " +
                 KEY_DEVICE_CHARACTERISTICS + " TEXT," +
+                KEY_DEVICE_CHANNELWIDTH + " TEXT," +
+                KEY_DEVICE_FREQUENCY + " INTEGER," +
+                KEY_DEVICE_INTENSITY + " INTEGER," +
                 KEY_DEVICE_TYPE + " TEXT" +
                 ")";
 
@@ -194,6 +200,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(KEY_DEVICE_BSSID, device.getBssid());
             values.put(KEY_DEVICE_MANUFACTURER, device.getManufacturer());
             values.put(KEY_DEVICE_CHARACTERISTICS, device.getCharacteristics());
+            values.put(KEY_DEVICE_CHANNELWIDTH, device.getChannelWidth());
+            values.put(KEY_DEVICE_FREQUENCY, device.getFrequency());
+            values.put(KEY_DEVICE_INTENSITY, device.getSignalIntensity());
             values.put(KEY_DEVICE_TYPE, device.getType().toString());
 
             long rowId = db.insertOrThrow(TABLE_DEVICES, null, values);
@@ -275,7 +284,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             //Log.d("ADD LOCATION TO DB", "ERROR WHILE ADDING A LOCATION TO DB");
             //The error is caused because the location already exists in the database.
             //We need to get the ID of such location.
-            String[] fields = new String[]{KEY_LOCATION_COORDINATES};
+            String[] fields = new String[]{KEY_LOCATION_ID};
             String[] args = new String[]{location.getCoordinatesString()};
 
             Cursor c = db.query(TABLE_LOCATIONS, fields, KEY_LOCATION_COORDINATES + "=?", args, null, null, null);
@@ -500,11 +509,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 String bssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_BSSID));
                 String characteristics = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHARACTERISTICS));
                 String manufacturer = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MANUFACTURER));
+                String channelWidth = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHANNELWIDTH));
+                int frequency = cursor.getInt(cursor.getColumnIndex(KEY_DEVICE_FREQUENCY));
+                int signalIntensity = cursor.getInt(cursor.getColumnIndex(KEY_DEVICE_INTENSITY));
                 String typeString = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE));
 
                 DeviceType type = DeviceType.valueOf(typeString);
 
-                device = new Device(ssid, bssid, characteristics, manufacturer, type);
+                //Second constructor
+                //String ssid, String bssid, String characteristics, String manufacturer, Object channelWidth,
+                // int frequency, int signalIntensity, DeviceType type
+                device = new Device(ssid, bssid, characteristics, manufacturer, channelWidth, frequency, signalIntensity,
+                        type);
             }
         }catch(SQLException e){
             Log.d("getDevice", "ERROR WHILE GETTING DEVICE FROM DB");

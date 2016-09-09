@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-        storeLocationThread.run();
+        storeLocationThread.start();
     }
 
     private void storeDeviceInDb(final Device device){
@@ -342,7 +342,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     BluetoothClass btClass = device.getBluetoothClass();
                     String deviceClass = determineBtMajorDevice(btClass);
 
-                    Device btDevice = new Device(btName, macAddress, deviceClass, DeviceType.BLUETOOTH);
+                    //First constructor for bluetooth device
+                    //String ssid, String bssid, String characteristics, int channelWidthConstant, int frequency, int
+                    //signalIntensity, DeviceType type
+                    Device btDevice = new Device(btName, macAddress, deviceClass, 9999, 0, 9999, DeviceType.BLUETOOTH);
 
                     if(!databaseHelper.deviceExistsInDb(btDevice)){
                         storeDeviceInDb(btDevice);
@@ -376,7 +379,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //For each scan result, create a Device and add it to the Location devices list
                     //If the user hasn't moved, any devices already discovered on that location won't be registered again
                     for (ScanResult s : scanResultList) {
-                        Device wifiDevice = new Device(s.SSID, s.BSSID, s.capabilities, DeviceType.WIFI);
+                        //First constructor for WiFi AP
+                        //String ssid, String bssid, String characteristics, int channelWidthConstant, int frequency, int
+                        //signalIntensity, DeviceType type
+                        Device wifiDevice = new Device(s.SSID, s.BSSID, s.capabilities, s.channelWidth, s.frequency,
+                                s.level, DeviceType.WIFI);
+
                         location.addFoundDevice(wifiDevice);
 
                         //Add the device to the database if and only if it doesn't exist in it

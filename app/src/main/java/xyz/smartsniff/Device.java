@@ -1,6 +1,7 @@
 package xyz.smartsniff;
 
 import android.app.Activity;
+import android.net.wifi.ScanResult;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -16,14 +17,17 @@ import com.android.volley.toolbox.Volley;
  * Date: 30/06/2016
  */
 public class Device {
-    private String ssid, bssid, characteristics, manufacturer;
+    private String ssid, bssid, characteristics, manufacturer, channelWidth;
+    private int frequency, signalIntensity;
     private DeviceType type;
 
-    public Device(String ssid, String bssid, String characteristics, DeviceType type){
-        this(ssid, bssid, characteristics, null, type);
+    public Device(String ssid, String bssid, String characteristics, int channelWidthConstant, int frequency, int
+            signalIntensity, DeviceType type){
+        this(ssid, bssid, characteristics, null, channelWidthConstant, frequency, signalIntensity, type);
     }
 
-    public Device(String ssid, String bssid, String characteristics, String manufacturer, DeviceType type){
+    public Device(String ssid, String bssid, String characteristics, String manufacturer, Object channelWidth, int
+            frequency, int signalIntensity, DeviceType type){
         //Null check to avoid violating the NOT-NULL restriction
         //Usually we enter this check because we have found a bluetooth device with no friendly name
         if(ssid == null)
@@ -32,6 +36,22 @@ public class Device {
             this.ssid = ssid;
         this.bssid = bssid;
         this.characteristics = characteristics;
+
+        if(channelWidth.getClass().equals(Integer.class)){
+            int constant = (Integer) channelWidth;
+
+            if(constant != 9999)
+                this.channelWidth = selectChannelWidthFromConstant(constant);
+        }else if(channelWidth.getClass().equals(String.class)){
+            this.channelWidth = (String) channelWidth;
+        }
+
+
+        if(frequency != 0)
+            this.frequency = frequency;
+
+        if(signalIntensity != 9999)
+            this.signalIntensity = signalIntensity;
 
         if(manufacturer != null)
             this.manufacturer = manufacturer;
@@ -76,6 +96,33 @@ public class Device {
         });
         //Add the request to the queue
         Utils.queue.add(request);
+    }
+
+    private String selectChannelWidthFromConstant(int constant){
+        String result = null;
+
+        switch(constant){
+            case ScanResult.CHANNEL_WIDTH_20MHZ:
+                result = "20 MHz";
+                break;
+
+            case ScanResult.CHANNEL_WIDTH_40MHZ:
+                result = "40 MHz";
+                break;
+
+            case ScanResult.CHANNEL_WIDTH_80MHZ:
+                result = "80 MHz";
+                break;
+
+            case ScanResult.CHANNEL_WIDTH_80MHZ_PLUS_MHZ:
+                result = "160 MHz PLUS";
+                break;
+
+            default:
+                break;
+        }
+
+        return result;
     }
 
     /**
@@ -139,6 +186,30 @@ public class Device {
 
     public void setType(DeviceType type) {
         this.type = type;
+    }
+
+    public String getChannelWidth() {
+        return channelWidth;
+    }
+
+    public void setChannelWidth(String channelWidth) {
+        this.channelWidth = channelWidth;
+    }
+
+    public int getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(int frequency) {
+        this.frequency = frequency;
+    }
+
+    public double getSignalIntensity() {
+        return signalIntensity;
+    }
+
+    public void setSignalIntensity(int signalIntensity) {
+        this.signalIntensity = signalIntensity;
     }
 }
 
