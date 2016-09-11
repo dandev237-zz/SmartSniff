@@ -54,6 +54,16 @@ public class Location {
         return locatedDevices.size();
     }
 
+    /**
+     * A location is valid if its coordinates are not (0.0, 0.0)
+     * This is a fail-safe function to ensure we are only registering locations received via
+     * geolocation services.
+     * @return
+     */
+    public boolean isValidLocation(){
+        return coordinates.latitude != 0.0 && coordinates.longitude != 0.0;
+    }
+
     //Getters and setters
 
     public Date getDate() {

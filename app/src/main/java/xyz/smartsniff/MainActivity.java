@@ -370,7 +370,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     else{
                         //I'm in a new spot, create a new Location object
                         location = new Location(locationDate, locationCoordinates);
-                        storeLocationInDb(location);
+                        if(location.isValidLocation())
+                            storeLocationInDb(location);
                     }
 
                     //Get the scan results
@@ -388,7 +389,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         location.addFoundDevice(wifiDevice);
 
                         //Add the device to the database if and only if it doesn't exist in it
-                        if(!databaseHelper.deviceExistsInDb(wifiDevice)){
+                        //and the location is valid (i.e not (0.0, 0.0))
+                        if(location.isValidLocation() && !databaseHelper.deviceExistsInDb(wifiDevice)){
                             createAssociation(wifiDevice);
                             wifiDevice.getManufacturerFromBssid(MainActivity.this);
                             sessionResults++;
@@ -396,11 +398,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         discoveriesTextView.setText(String.valueOf(sessionResults));
 
-                        if(!isSameLocation(locationCoordinates))
+                        if(location.isValidLocation() && !isSameLocation(locationCoordinates)){
                             mapManager.addSinglePointToHeatMap(location);
 
-                        //Map camera update
-                        mapManager.animateCamera(location.getCoordinates());
+                            //Map camera update
+                            mapManager.animateCamera(location.getCoordinates());
+                        }
 
                         //The list of found devices must not transfer from one location to another
                         location.getLocatedDevices().clear();
