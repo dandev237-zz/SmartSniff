@@ -99,7 +99,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="@string/discoveries"
+            android:text="@string/total_discoveries"
             android:textColor="@color/abc_primary_text_material_light"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
@@ -131,4 +131,5 @@
         android:layout_below="@+id/tableRow3"
         android:layout_alignParentStart="true"
         android:drawSelectorOnTop="false"/>
+
 </RelativeLayout>

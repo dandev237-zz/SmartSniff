@@ -39,9 +39,9 @@ public class ResultAdapter extends ArrayAdapter<Device> {
             v = layoutInflater.inflate(R.layout.result_row_layout, parent, false);
 
             //Fill the layout with values
-            TextView ssidTextView = (TextView) convertView.findViewById(R.id.resultSsidTextView);
-            TextView macTextView = (TextView) convertView.findViewById(R.id.resultMacTextView);
-            ImageView typeImageView = (ImageView) convertView.findViewById(R.id.resultRowImage);
+            TextView ssidTextView = (TextView) v.findViewById(R.id.resultSsidTextView);
+            TextView macTextView = (TextView) v.findViewById(R.id.resultMacTextView);
+            ImageView typeImageView = (ImageView) v.findViewById(R.id.resultRowImage);
 
             holder.ssidTextView = ssidTextView;
             holder.macTextView = macTextView;
@@ -63,7 +63,7 @@ public class ResultAdapter extends ArrayAdapter<Device> {
         holder.ssidTextView.setText(device.getSsid());
         holder.macTextView.setText(device.getBssid());
 
-        return convertView;
+        return v;
     }
 
     /**

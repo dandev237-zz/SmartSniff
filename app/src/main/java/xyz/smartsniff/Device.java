@@ -9,6 +9,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import java.io.Serializable;
+
 /**
  * Model class to represent devices.
  *
@@ -16,7 +18,7 @@ import com.android.volley.toolbox.Volley;
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
  */
-public class Device {
+public class Device implements Serializable {
     private String ssid, bssid, characteristics, manufacturer, channelWidth;
     private int frequency, signalIntensity;
     private DeviceType type;

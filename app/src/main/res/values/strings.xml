@@ -21,4 +21,5 @@
     <string name="delete_alert_dialog_negative_button">No, cancelar</string>
     <string name="action_update_map">Actualizar mapa</string>
     <string name="session_results">Resultados de sesión</string>
+    <string name="total_discoveries">Nº. total hallazgos:</string>
 </resources>

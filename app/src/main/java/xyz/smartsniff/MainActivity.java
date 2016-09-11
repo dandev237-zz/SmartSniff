@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,8 +32,13 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Main activity of the application. Contains the scanning interface and the
@@ -63,6 +69,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int sessionResults;
     private boolean disableAppBarFlag = false;
     private boolean isBluetoothSupported = true;
+
+    private Set<Device> lastSessionDevices;
+    private Session lastSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +128,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Session session = new Session(startDate);
                     databaseHelper.addSession(session);
 
+                    lastSession = session;
+                    lastSessionDevices = Collections.synchronizedSet(new HashSet<Device>());
+
                     beginScanningProcedure();
                 } else {
                     scanLayout.setVisibility(View.INVISIBLE);
@@ -137,9 +149,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Toast.makeText(MainActivity.this, "Escaneo terminado. Hallazgos: " + sessionResults +
                             ".", Toast.LENGTH_SHORT).show();
 
+                    lastSession.setEndDate(endDate);
+
                     sessionResults = 0;
 
                     disableAppBarFlag = false;
+
+                    //Build the results activity intent and launch the results activity
+                    Intent resultsIntent = new Intent(MainActivity.this, ResultsActivity.class);
+                    resultsIntent.putExtra("lastSessionInitDate", lastSession.getStartDateString());
+                    resultsIntent.putExtra("lastSessionEndDate", lastSession.getEndDateString());
+                    resultsIntent.putExtra("lastSessionDevices", Utils.gson.toJson(lastSessionDevices));
+                    startActivity(resultsIntent);
                 }
             }
         });
@@ -347,7 +368,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //signalIntensity, DeviceType type
                     Device btDevice = new Device(btName, macAddress, deviceClass, 9999, 0, 9999, DeviceType.BLUETOOTH);
 
-                    if(!databaseHelper.deviceExistsInDb(btDevice)){
+                    lastSessionDevices.add(btDevice);
+
+                    if(!databaseHelper.deviceExistsInDb(btDevice)) {
                         storeDeviceInDb(btDevice);
                         btDevice.getManufacturerFromBssid(MainActivity.this);
                         sessionResults++;
@@ -385,6 +408,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //signalIntensity, DeviceType type
                         Device wifiDevice = new Device(s.SSID, s.BSSID, s.capabilities, s.channelWidth, s.frequency,
                                 s.level, DeviceType.WIFI);
+
+                        lastSessionDevices.add(wifiDevice);
 
                         location.addFoundDevice(wifiDevice);
 
