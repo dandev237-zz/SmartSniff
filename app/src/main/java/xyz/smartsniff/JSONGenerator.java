@@ -64,6 +64,7 @@ public class JSONGenerator {
         try {
             //Build a JSON object containing all the data
             buildJSON(associations);
+            //System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
             e.printStackTrace();
@@ -179,7 +180,7 @@ public class JSONGenerator {
                 jsonObject = prepareJsonObject();
 
                 //Send the JSON object to the server using the RESTful API
-                String url = "http://192.168.1.199:5000/api/db/storedata";
+                String url = "http://192.168.1.199:5001/api/db/storedata";
                 JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                         new Response.Listener<JSONObject>() {
                             @Override
