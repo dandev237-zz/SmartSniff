@@ -31,6 +31,8 @@
 
         <activity android:name=".SettingsActivity">
         </activity>
+        <activity android:name=".ResultsActivity">
+        </activity>
     </application>
 
 </manifest>
