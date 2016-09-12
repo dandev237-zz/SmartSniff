@@ -203,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
 
         //Register receiver and request first bluetooth discovery scan
-        if(isBluetoothSupported) {
+        if(isBluetoothSupported && bluetoothAdapter.isEnabled()) {
             registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
             registerReceiver(receiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
             bluetoothAdapter.startDiscovery();

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:weightSum="1"
+              android:paddingBottom="5dp">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/frameLayout"
+        android:stretchColumns="0,1"
+        android:id="@+id/tableLayout"
+        android:paddingTop="15dp"
+        android:paddingBottom="10dp">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="5dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Nombre:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/ssidTextView"
+                android:layout_column="1"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="5dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Dirección MAC:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/bssidTextView"
+                android:layout_column="1"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Fabricante:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/manufacturerTextView"
+                android:layout_column="0"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"
+                android:layout_span="2"/>
+        </TableRow>
+
+    </TableLayout>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#000000"
+        android:orientation="vertical"/>
+
+    <TableRow
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Características:"
+            android:layout_column="0"
+            android:paddingLeft="5dp"
+            android:textColor="@color/primary_text_default_material_light"
+            android:id="@+id/capabilitiesRowText"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/capabilitiesTextView"
+            android:layout_column="1"
+            android:textAlignment="textEnd"
+            android:paddingRight="5dp"
+            android:textColor="@color/primary_text_default_material_light"/>
+    </TableRow>
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/frameLayout"
+        android:stretchColumns="0,1"
+        android:id="@+id/wifiDetailsLayout"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:orientation="vertical">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/tableRow4">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Ancho de canal:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"
+                android:paddingBottom="5dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/channelWidthTextView"
+                android:layout_column="1"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="5dp"
+            android:id="@+id/tableRow5">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Frecuencia:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/frequencyTextView"
+                android:layout_column="1"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/tableRow6">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Potencia de señal:"
+                android:layout_column="0"
+                android:paddingLeft="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/signalTextView"
+                android:layout_column="1"
+                android:textAlignment="textEnd"
+                android:paddingRight="5dp"
+                android:textColor="@color/primary_text_default_material_light"/>
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>

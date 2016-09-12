@@ -1,10 +1,14 @@
 package xyz.smartsniff;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.google.gson.reflect.TypeToken;
@@ -50,9 +54,57 @@ public class ResultsActivity extends AppCompatActivity {
 
         resultsListView = (ListView) findViewById(R.id.resultListView);
 
-        List<Device> devices = new ArrayList<>(lastSessionDevices);
+        final List<Device> devices = new ArrayList<>(lastSessionDevices);
         ResultAdapter adapter = new ResultAdapter(devices, this);
 
         resultsListView.setAdapter(adapter);
+
+        resultsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                displayDetailsDialog((Device) adapterView.getItemAtPosition(i));
+            }
+        });
+    }
+
+    private void displayDetailsDialog(Device device) {
+        Dialog dialog = new Dialog(ResultsActivity.this);
+        dialog.setContentView(R.layout.result_details_layout);
+        dialog.setTitle("Detalles");
+
+        TextView ssidTextView, bssidTextView, manufacturerTextView, capabilitiesTextView, channelWidthTextView,
+                frequencyTextView, signalTextView;
+
+        ssidTextView = (TextView) dialog.findViewById(R.id.ssidTextView);
+        ssidTextView.setText(device.getSsid());
+
+        bssidTextView = (TextView) dialog.findViewById(R.id.bssidTextView);
+        bssidTextView.setText(device.getBssid());
+
+        manufacturerTextView = (TextView) dialog.findViewById(R.id.manufacturerTextView);
+        manufacturerTextView.setText(device.getManufacturer());
+
+        capabilitiesTextView = (TextView) dialog.findViewById(R.id.capabilitiesTextView);
+        capabilitiesTextView.setText(device.getCharacteristics());
+
+        if(device.getType().equals(DeviceType.WIFI)){
+            channelWidthTextView = (TextView) dialog.findViewById(R.id.channelWidthTextView);
+            channelWidthTextView.setText(device.getChannelWidth());
+
+            frequencyTextView = (TextView) dialog.findViewById(R.id.frequencyTextView);
+            frequencyTextView.setText(String.format("%s MHz", String.valueOf(device.getFrequency())));
+
+            signalTextView = (TextView) dialog.findViewById(R.id.signalTextView);
+            signalTextView.setText(String.format("%s dBm", String.valueOf(device.getSignalIntensity())));
+        }else{
+            TableLayout wifiDetailsLayout = (TableLayout) dialog.findViewById(R.id.wifiDetailsLayout);
+            wifiDetailsLayout.removeAllViews();
+
+            TextView capabilitiesRowText = (TextView) dialog.findViewById(R.id.capabilitiesRowText);
+            capabilitiesRowText.setText("Tipo de dispositivo:");
+        }
+
+        dialog.show();
+
     }
 }
