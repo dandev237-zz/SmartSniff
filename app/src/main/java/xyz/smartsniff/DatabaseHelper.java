@@ -240,6 +240,31 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update(TABLE_DEVICES, values, KEY_DEVICE_BSSID + " = ?", args);
     }
 
+    public String getManufacturerOfDevice(String deviceBssid){
+        SQLiteDatabase db = getReadableDatabase();
+        String manufacturer = "";
+
+        Cursor c = null;
+        db.beginTransaction();
+        try{
+            String selectQuery = "SELECT " + KEY_DEVICE_MANUFACTURER + " FROM " + TABLE_DEVICES + " WHERE " +
+                    KEY_DEVICE_BSSID + "=?";
+
+            c = db.rawQuery(selectQuery, new String[]{deviceBssid});
+            if(c.moveToFirst())
+                manufacturer = c.getString(c.getColumnIndex(KEY_DEVICE_MANUFACTURER));
+            db.setTransactionSuccessful();
+        }catch(SQLException e){
+            Log.d("GET MANUFACTURER", "ERROR WHILE GETTING MANUFACTURER FROM DEVICE");
+        }finally {
+            db.endTransaction();
+            if(c != null)
+                c.close();
+        }
+
+        return manufacturer;
+    }
+
     public boolean deviceExistsInDb(Device device){
         boolean exists = false;
 

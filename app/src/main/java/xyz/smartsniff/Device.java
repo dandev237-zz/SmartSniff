@@ -182,6 +182,10 @@ public class Device implements Serializable {
         dbHelper.updateDeviceWithManufacturer(this);
     }
 
+    public void setManufacturer(String manufacturer){
+        this.manufacturer = manufacturer;
+    }
+
     public DeviceType getType() {
         return type;
     }

@@ -6,18 +6,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
 import com.google.gson.reflect.TypeToken;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Results activity. Contains a presentation of the results of any given session
@@ -30,6 +27,8 @@ public class ResultsActivity extends AppCompatActivity {
 
     private TextView initDateTextView, endDateTextView, discoveriesTextView;
     private ListView resultsListView;
+
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +64,8 @@ public class ResultsActivity extends AppCompatActivity {
                 displayDetailsDialog((Device) adapterView.getItemAtPosition(i));
             }
         });
+
+        dbHelper = DatabaseHelper.getInstance(this);
     }
 
     private void displayDetailsDialog(Device device) {
@@ -82,6 +83,9 @@ public class ResultsActivity extends AppCompatActivity {
         bssidTextView.setText(device.getBssid());
 
         manufacturerTextView = (TextView) dialog.findViewById(R.id.manufacturerTextView);
+        if(device.getManufacturer() == null){
+            device.setManufacturer(dbHelper.getManufacturerOfDevice(device.getBssid()));
+        }
         manufacturerTextView.setText(device.getManufacturer());
 
         capabilitiesTextView = (TextView) dialog.findViewById(R.id.capabilitiesTextView);
