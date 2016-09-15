@@ -71,7 +71,7 @@ public class ResultsActivity extends AppCompatActivity {
     private void displayDetailsDialog(Device device) {
         Dialog dialog = new Dialog(ResultsActivity.this);
         dialog.setContentView(R.layout.result_details_layout);
-        dialog.setTitle("Detalles");
+        dialog.setTitle(R.string.result_title);
 
         TextView ssidTextView, bssidTextView, manufacturerTextView, capabilitiesTextView, channelWidthTextView,
                 frequencyTextView, signalTextView;
@@ -105,7 +105,7 @@ public class ResultsActivity extends AppCompatActivity {
             wifiDetailsLayout.removeAllViews();
 
             TextView capabilitiesRowText = (TextView) dialog.findViewById(R.id.capabilitiesRowText);
-            capabilitiesRowText.setText("Tipo de dispositivo:");
+            capabilitiesRowText.setText(R.string.result_device_type);
         }
 
         dialog.show();

@@ -56,9 +56,10 @@ public class ResultAdapter extends ArrayAdapter<Device> {
         Device device = deviceList.get(position);
 
         //If it is a bluetooth device, change the image resource
-        //(Default image is a WiFi icon)
         if(device.getType().equals(DeviceType.BLUETOOTH))
             holder.typeImageView.setImageResource(R.drawable.ic_result_bluetooth);
+        else
+            holder.typeImageView.setImageResource(R.drawable.ic_result_wifi);
 
         holder.ssidTextView.setText(device.getSsid());
         holder.macTextView.setText(device.getBssid());

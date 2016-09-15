@@ -22,4 +22,23 @@
     <string name="action_update_map">Actualizar mapa</string>
     <string name="session_results">Resultados de sesión</string>
     <string name="total_discoveries">Nº. total hallazgos:</string>
+    <string name="result_title">Detalles</string>
+    <string name="result_device_type">Tipo de dispositivo:</string>
+    <string name="result_name">Nombre:</string>
+    <string name="result_mac_address">Dirección MAC:</string>
+    <string name="result_manufacturer">Fabricante:</string>
+    <string name="result_characteristics">Características:</string>
+    <string name="result_channel_width">Ancho de canal:</string>
+    <string name="result_frequency">Frecuencia:</string>
+    <string name="result_signal_intensity">Potencia de señal:</string>
+    <string name="result_end_date">Fecha de fin:</string>
+    <string name="jsongenerator_sending_data">Enviando datos al servidor...</string>
+    <string name="jsongenerator_data_sent">Datos enviados</string>
+    <string name="jsongenerator_send_error">ERROR: No se pudieron enviar los datos</string>
+    <string name="scan_ended">"Escaneo terminado. Hallazgos: "</string>
+    <string name="delete_data_error">ERROR: No hay datos que borrar</string>
+    <string name="data_send_error_2">ERROR: No hay datos que enviar</string>
+    <string name="mapmanager_loading_map">Cargando mapa de calor, espere por favor...</string>
+    <string name="mapmanager_updating_map">Actualizando mapa de calor, espere por favor...</string>
+    <string name="settings_save_success">Configuración guardada con éxito.</string>
 </resources>

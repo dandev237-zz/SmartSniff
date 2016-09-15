@@ -161,7 +161,7 @@ public class JSONGenerator {
     private void initializeProgressDialog(){
         progressDialog = new ProgressDialog(mainActivity);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progressDialog.setMessage("Enviando datos al servidor...");
+        progressDialog.setMessage(mainActivity.getString(R.string.jsongenerator_sending_data));
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(false);
     }
@@ -185,14 +185,14 @@ public class JSONGenerator {
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
-                                Toast.makeText(mainActivity, "Datos enviados", Toast.LENGTH_SHORT)
+                                Toast.makeText(mainActivity, mainActivity.getString(R.string.jsongenerator_data_sent), Toast.LENGTH_SHORT)
                                         .show();
                             }
                         },
                         new Response.ErrorListener() {
                             @Override
                             public void onErrorResponse(VolleyError error) {
-                                Toast.makeText(mainActivity, "ERROR: No se pudieron enviar los datos", Toast.LENGTH_SHORT)
+                                Toast.makeText(mainActivity, R.string.jsongenerator_send_error, Toast.LENGTH_SHORT)
                                         .show();
                             }
                         }) {

@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     databaseHelper.updateSession(Utils.formatDate(endDate));
                     mapManager.reloadHeatMapPoints(false);
 
-                    Toast.makeText(MainActivity.this, "Escaneo terminado. Hallazgos: " + sessionResults +
+                    Toast.makeText(MainActivity.this, getString(R.string.scan_ended) + sessionResults +
                             ".", Toast.LENGTH_SHORT).show();
 
                     lastSession.setEndDate(endDate);
@@ -276,7 +276,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if(databaseHelper.getNumberOfSessions() > 0)
                 showDeleteAlertDialog();
             else
-                Toast.makeText(MainActivity.this, "ERROR: No hay datos que borrar", Toast.LENGTH_SHORT)
+                Toast.makeText(MainActivity.this, getString(R.string.delete_data_error), Toast.LENGTH_SHORT)
                         .show();
         }
 
@@ -323,7 +323,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             JSONGenerator jsonGenerator = new JSONGenerator(MainActivity.this);
             jsonGenerator.sendJSONToServer();
         }else{
-            Toast.makeText(MainActivity.this, "ERROR: No hay datos que enviar", Toast.LENGTH_SHORT)
+            Toast.makeText(MainActivity.this, getString(R.string.data_send_error_2), Toast.LENGTH_SHORT)
                     .show();
         }
     }

@@ -86,7 +86,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
 
         if(preferencesChanged)
-            Toast.makeText(getApplicationContext(), "Configuración guardada con éxito.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), getString(R.string.settings_save_success), Toast.LENGTH_SHORT).show();
     }
 
     private final TextWatcher intervalWatcher = new TextWatcher() {

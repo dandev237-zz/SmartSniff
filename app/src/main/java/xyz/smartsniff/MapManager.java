@@ -86,9 +86,9 @@ public class MapManager {
         progressDialog = new ProgressDialog(mainActivity);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         if(firstLoad)
-            progressDialog.setMessage("Cargando mapa de calor, espere por favor...");
+            progressDialog.setMessage(mainActivity.getString(R.string.mapmanager_loading_map));
         else
-            progressDialog.setMessage("Actualizando mapa de calor, espere por favor...");
+            progressDialog.setMessage(mainActivity.getString(R.string.mapmanager_updating_map));
         progressDialog.setCancelable(false);
         progressDialog.setIndeterminate(false);
     }

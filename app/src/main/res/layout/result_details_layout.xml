@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Nombre:"
+                android:text="@string/result_name"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"/>
@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Dirección MAC:"
+                android:text="@string/result_mac_address"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"/>
@@ -73,7 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Fabricante:"
+                android:text="@string/result_manufacturer"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"/>
@@ -113,7 +113,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Características:"
+            android:text="@string/result_characteristics"
             android:layout_column="0"
             android:paddingLeft="5dp"
             android:textColor="@color/primary_text_default_material_light"
@@ -149,7 +149,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Ancho de canal:"
+                android:text="@string/result_channel_width"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"
@@ -176,7 +176,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Frecuencia:"
+                android:text="@string/result_frequency"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"/>
@@ -201,7 +201,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="Potencia de señal:"
+                android:text="@string/result_signal_intensity"
                 android:layout_column="0"
                 android:paddingLeft="5dp"
                 android:textColor="@color/primary_text_default_material_light"/>
