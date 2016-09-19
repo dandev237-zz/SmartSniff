@@ -60,10 +60,11 @@ public class JSONGenerator {
     private JSONObject prepareJsonObject() {
         //Collect all the associations data
         List<Association> associations = databaseHelper.getAllAssociations();
+        List<Device> bluetoothDevices = databaseHelper.getBluetoothDevices();
 
         try {
             //Build a JSON object containing all the data
-            buildJSON(associations);
+            buildJSON(associations, bluetoothDevices);
             //System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
@@ -79,7 +80,7 @@ public class JSONGenerator {
      * @param associations  All the associations stored in the local database
      * @throws JSONException
      */
-    private void buildJSON(List<Association> associations) throws JSONException {
+    private void buildJSON(List<Association> associations, List<Device> bluetoothDevices) throws JSONException {
         /*
         JSON Structure:
         - 1 JSON Object (jsonObject), containing
@@ -142,6 +143,10 @@ public class JSONGenerator {
 
         JSONArray devicesArray = new JSONArray();
         for(Device d: consideredDevices.values()){
+            JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
+            devicesArray.put(deviceObject);
+        }
+        for(Device d: bluetoothDevices){
             JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
             devicesArray.put(deviceObject);
         }
