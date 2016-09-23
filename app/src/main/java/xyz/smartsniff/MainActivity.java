@@ -101,11 +101,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             isBluetoothSupported = false;
         }
 
-        if(isBluetoothSupported && !bluetoothAdapter.isEnabled()){
-            Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBluetoothIntent, Utils.REQUEST_ENABLE_INTENT);
-        }
-
         geoGPS = new GeolocationGPS(MainActivity.this, this);
 
         sessionResults = 0;
@@ -121,6 +116,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     scanLayout.setVisibility(View.VISIBLE);
                     discoveriesTextView.setText(String.valueOf(sessionResults));
+
+                    if(isBluetoothSupported && !bluetoothAdapter.isEnabled()){
+                        Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                        startActivityForResult(enableBluetoothIntent, Utils.REQUEST_ENABLE_INTENT);
+                    }
 
                     geoGPS.connect();
                     startDate = new Date();
