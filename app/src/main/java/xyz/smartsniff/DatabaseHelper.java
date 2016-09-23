@@ -392,6 +392,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Cursor countCursor = db.rawQuery(countQuery, null);
                     if(countCursor.moveToFirst())
                         locationMap.put(location, countCursor.getInt(0));
+                    countCursor.close();
                 }while(cursor.moveToNext());
             }
 
