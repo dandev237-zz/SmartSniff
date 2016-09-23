@@ -38,27 +38,30 @@ public class Device implements Serializable {
             this.ssid = ssid;
         this.bssid = bssid;
         this.characteristics = characteristics;
+        this.type = type;
 
-        if(channelWidth.getClass().equals(Integer.class)){
-            int constant = (Integer) channelWidth;
+        if(this.type.equals(DeviceType.WIFI)){
+            if(channelWidth.getClass().equals(Integer.class)){
+                int constant = (Integer) channelWidth;
 
-            if(constant != 9999)
-                this.channelWidth = selectChannelWidthFromConstant(constant);
-        }else if(channelWidth.getClass().equals(String.class)){
-            this.channelWidth = (String) channelWidth;
+                if(constant != 9999)
+                    this.channelWidth = selectChannelWidthFromConstant(constant);
+            }else if(channelWidth.getClass().equals(String.class)){
+                this.channelWidth = (String) channelWidth;
+            }
+
+
+            if(frequency != 0)
+                this.frequency = frequency;
+
+            if(signalIntensity != 9999)
+                this.signalIntensity = signalIntensity;
         }
-
-
-        if(frequency != 0)
-            this.frequency = frequency;
-
-        if(signalIntensity != 9999)
-            this.signalIntensity = signalIntensity;
 
         if(manufacturer != null)
             this.manufacturer = manufacturer;
 
-        this.type = type;
+
     }
 
     /**

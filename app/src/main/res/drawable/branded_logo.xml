@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <color android:color="@color/background_material_light"/>
+    </item>
+    <item>
+        <bitmap
+        android:src="@drawable/smartsniff_launch9patch"
+        android:tileMode="disabled"
+        android:gravity="fill_horizontal|fill_vertical"/>
+    </item>
+</layer-list>

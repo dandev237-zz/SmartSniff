@@ -60,11 +60,10 @@ public class JSONGenerator {
     private JSONObject prepareJsonObject() {
         //Collect all the associations data
         List<Association> associations = databaseHelper.getAllAssociations();
-        List<Device> bluetoothDevices = databaseHelper.getBluetoothDevices();
 
         try {
             //Build a JSON object containing all the data
-            buildJSON(associations, bluetoothDevices);
+            buildJSON(associations);
             //System.out.println(jsonObject.toString(3));
         } catch (JSONException e) {
             Log.e("JSONGenerator", "ERROR: " + e.getCause());
@@ -80,7 +79,7 @@ public class JSONGenerator {
      * @param associations  All the associations stored in the local database
      * @throws JSONException
      */
-    private void buildJSON(List<Association> associations, List<Device> bluetoothDevices) throws JSONException {
+    private void buildJSON(List<Association> associations) throws JSONException {
         /*
         JSON Structure:
         - 1 JSON Object (jsonObject), containing
@@ -146,10 +145,6 @@ public class JSONGenerator {
             JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
             devicesArray.put(deviceObject);
         }
-        for(Device d: bluetoothDevices){
-            JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
-            devicesArray.put(deviceObject);
-        }
 
         JSONArray locationsArray = new JSONArray();
         for(Location l: consideredLocations.values()){
@@ -185,7 +180,7 @@ public class JSONGenerator {
                 jsonObject = prepareJsonObject();
 
                 //Send the JSON object to the server using the RESTful API
-                String url = "http://192.168.1.199:5001/api/db/storedata";
+                String url = "http://bustrack.undo.it:5000/api/db/storedata";
                 JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                         new Response.Listener<JSONObject>() {
                             @Override

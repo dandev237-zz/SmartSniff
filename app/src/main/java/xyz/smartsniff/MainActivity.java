@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -164,6 +165,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+
+
     }
 
     @Override
@@ -371,7 +374,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     lastSessionDevices.add(btDevice);
 
                     if(!databaseHelper.deviceExistsInDb(btDevice)) {
-                        storeDeviceInDb(btDevice);
+                        //storeDeviceInDb(btDevice);
+                        createAssociation(btDevice);
                         btDevice.getManufacturerFromBssid(MainActivity.this);
                         sessionResults++;
                     }

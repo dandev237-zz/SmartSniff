@@ -559,41 +559,4 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
-    public List<Device> getBluetoothDevices(){
-        List<Device> bluetoothDevices = new ArrayList<>();
-
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = null;
-        db.beginTransaction();
-        try{
-            String selectQuery = "SELECT * FROM " + TABLE_DEVICES + " WHERE " + KEY_DEVICE_TYPE + "=?";
-            cursor = db.rawQuery(selectQuery, new String[]{DeviceType.BLUETOOTH.toString()});
-            if(cursor.moveToFirst()){
-                do{
-                    String ssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_SSID));
-                    String bssid = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_BSSID));
-                    String characteristics = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_CHARACTERISTICS));
-                    String manufacturer = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_MANUFACTURER));
-                    String typeString = cursor.getString(cursor.getColumnIndex(KEY_DEVICE_TYPE));
-
-                    DeviceType type = DeviceType.valueOf(typeString);
-
-                    //Second constructor
-                    //String ssid, String bssid, String characteristics, String manufacturer, Object channelWidth,
-                    // int frequency, int signalIntensity, DeviceType type
-                    Device btDevice = new Device(ssid, bssid, characteristics, manufacturer, 9999, 0, 9999, type);
-
-                    bluetoothDevices.add(btDevice);
-                }while(cursor.moveToNext());
-            }
-        }catch(SQLException e){
-            Log.d("getDevice", "ERROR WHILE GETTING DEVICE FROM DB");
-        }finally{
-            db.endTransaction();
-            if(cursor != null)
-                cursor.close();
-        }
-        return bluetoothDevices;
-    }
-
 }
