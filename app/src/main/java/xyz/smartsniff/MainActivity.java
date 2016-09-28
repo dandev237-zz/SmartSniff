@@ -11,10 +11,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.Parcelable;
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -32,24 +31,31 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import xyz.smartsniff.Model.Device;
+import xyz.smartsniff.Model.DeviceType;
+import xyz.smartsniff.Model.Location;
+import xyz.smartsniff.Model.Session;
+import xyz.smartsniff.Utils.DatabaseHelper;
+import xyz.smartsniff.Utils.GeolocationGPS;
+import xyz.smartsniff.Utils.JSONGenerator;
+import xyz.smartsniff.Utils.Utils;
+
 /**
  * Main activity of the application. Contains the scanning interface and the
  * appbar.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 29/06/2016
  */
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback{
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private MapManager mapManager;
 
@@ -96,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if(bluetoothAdapter == null){
+        if (bluetoothAdapter == null) {
             //Device doesn't support Bluetooth functionality
             isBluetoothSupported = false;
         }
@@ -117,7 +123,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     scanLayout.setVisibility(View.VISIBLE);
                     discoveriesTextView.setText(String.valueOf(sessionResults));
 
-                    if(isBluetoothSupported && !bluetoothAdapter.isEnabled()){
+                    if (isBluetoothSupported && !bluetoothAdapter.isEnabled()) {
                         Intent enableBluetoothIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBluetoothIntent, Utils.REQUEST_ENABLE_INTENT);
                     }
@@ -137,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     scanLayout.setVisibility(View.INVISIBLE);
 
                     unregisterReceiver(receiver);
-                    if(isBluetoothSupported)
+                    if (isBluetoothSupported)
                         bluetoothAdapter.cancelDiscovery();
 
                     geoGPS.disconnect();
@@ -146,9 +152,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     databaseHelper.updateSession(Utils.formatDate(endDate));
                     mapManager.reloadHeatMapPoints(false);
-
-                    Toast.makeText(MainActivity.this, getString(R.string.scan_ended) + sessionResults +
-                            ".", Toast.LENGTH_SHORT).show();
 
                     lastSession.setEndDate(endDate);
 
@@ -170,11 +173,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         super.onDestroy();
 
         //To be sure we are not scanning
-        if(bluetoothAdapter != null){
+        if (bluetoothAdapter != null) {
             bluetoothAdapter.cancelDiscovery();
         }
     }
@@ -206,7 +209,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         };
 
         //Register receiver and request first bluetooth discovery scan
-        if(isBluetoothSupported && bluetoothAdapter.isEnabled()) {
+        if (isBluetoothSupported && bluetoothAdapter.isEnabled()) {
             registerReceiver(receiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
             registerReceiver(receiver, new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED));
             bluetoothAdapter.startDiscovery();
@@ -216,8 +219,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void storeLocationInDb(final Location location) {
-        Thread storeLocationThread = new Thread(){
-            public void run(){
+        Thread storeLocationThread = new Thread() {
+            public void run() {
                 databaseHelper.addLocation(location);
             }
         };
@@ -225,19 +228,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         storeLocationThread.start();
     }
 
-    private void storeDeviceInDb(final Device device){
-        Thread storeDeviceThread = new Thread(){
-            public void run(){
-                databaseHelper.addDevice(device);
-            }
-        };
-
-        storeDeviceThread.start();
-    }
-
-    private void createAssociation(final Device device){
-        Thread storeAssociationThread = new Thread(){
-            public void run(){
+    private void createAssociation(final Device device) {
+        Thread storeAssociationThread = new Thread() {
+            public void run() {
                 databaseHelper.addDevice(device);
                 databaseHelper.addAssociation();
             }
@@ -245,7 +238,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         storeAssociationThread.start();
     }
-
 
 
     //Action bar
@@ -258,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu){
+    public boolean onPrepareOptionsMenu(Menu menu) {
         menu.findItem(R.id.action_delete_data).setEnabled(!disableAppBarFlag);
         menu.findItem(R.id.action_send_data).setEnabled(!disableAppBarFlag);
         menu.findItem(R.id.action_settings).setEnabled(!disableAppBarFlag);
@@ -276,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         if (id == R.id.action_delete_data) {
             Log.d("AppBar Delete", "APPBAR: DELETE BUTTON PRESSED");
-            if(databaseHelper.getNumberOfSessions() > 0)
+            if (databaseHelper.getNumberOfSessions() > 0)
                 showDeleteAlertDialog();
             else
                 Toast.makeText(MainActivity.this, getString(R.string.delete_data_error), Toast.LENGTH_SHORT)
@@ -321,11 +313,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         dialog.show();
     }
 
-    private void sendDataToServer(){
-        if(databaseHelper.getNumberOfSessions() > 0){
+    private void sendDataToServer() {
+        if (databaseHelper.getNumberOfSessions() > 0) {
             JSONGenerator jsonGenerator = new JSONGenerator(MainActivity.this);
             jsonGenerator.sendJSONToServer();
-        }else{
+        } else {
             Toast.makeText(MainActivity.this, getString(R.string.data_send_error_2), Toast.LENGTH_SHORT)
                     .show();
         }
@@ -351,13 +343,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             String action = intent.getAction();
 
             //Check intent action
-            if(action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)){
+            if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
                 //The Receiver is responsible for requesting another discovery scan
-                if(bluetoothAdapter.isDiscovering())
+                if (bluetoothAdapter.isDiscovering())
                     bluetoothAdapter.startDiscovery();
-            }else{
+            } else {
                 //Time to check those results
-                if(action.equals(BluetoothDevice.ACTION_FOUND)){
+                if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                     //Bluetooth device
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
@@ -373,7 +365,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     lastSessionDevices.add(btDevice);
 
-                    if(!databaseHelper.deviceExistsInDb(btDevice)) {
+                    if (!databaseHelper.deviceExistsInDb(btDevice)) {
                         //storeDeviceInDb(btDevice);
                         createAssociation(btDevice);
                         btDevice.getManufacturerFromBssid(MainActivity.this);
@@ -381,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                     discoveriesTextView.setText(String.valueOf(sessionResults));
-                }else{
+                } else {
                     //Wifi device
                     //Get a location
                     LatLng locationCoordinates = new LatLng(geoGPS.getLatitude(), geoGPS.getLongitude());
@@ -394,10 +386,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (isSameLocation(locationCoordinates))
                         //I'm in the same place, use the Location object contained in lastKnownLocation
                         location = lastKnownLocation;
-                    else{
+                    else {
                         //I'm in a new spot, create a new Location object
                         location = new Location(locationDate, locationCoordinates);
-                        if(location.isValidLocation())
+                        if (location.isValidLocation())
                             storeLocationInDb(location);
                     }
 
@@ -419,7 +411,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         //Add the device to the database if and only if it doesn't exist in it
                         //and the location is valid (i.e not (0.0, 0.0))
-                        if(location.isValidLocation() && !databaseHelper.deviceExistsInDb(wifiDevice)){
+                        if (location.isValidLocation() && !databaseHelper.deviceExistsInDb(wifiDevice)) {
                             createAssociation(wifiDevice);
                             wifiDevice.getManufacturerFromBssid(MainActivity.this);
                             sessionResults++;
@@ -427,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         discoveriesTextView.setText(String.valueOf(sessionResults));
 
-                        if(location.isValidLocation() && !isSameLocation(locationCoordinates)){
+                        if (location.isValidLocation() && !isSameLocation(locationCoordinates)) {
                             mapManager.addSinglePointToHeatMap(location);
 
                             //Map camera update
@@ -443,10 +435,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
 
-        private String determineBtMajorDevice(BluetoothClass btClass){
+        private String determineBtMajorDevice(BluetoothClass btClass) {
             String result = "";
 
-            switch(btClass.getMajorDeviceClass()){
+            switch (btClass.getMajorDeviceClass()) {
                 case BluetoothClass.Device.Major.AUDIO_VIDEO:
                     result = "AUDIO-VIDEO";
                     break;

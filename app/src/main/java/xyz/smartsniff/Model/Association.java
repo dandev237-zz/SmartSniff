@@ -1,17 +1,17 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Model;
 
 /**
  * Model class to represent a stored association between a session, a location, and a device in the local database.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 14/08/2016
  */
 public class Association {
 
-    int sessionId, deviceId, locationId;
+    private int sessionId, deviceId, locationId;
 
-    public Association(int sessionId, int deviceId, int locationId){
+    public Association(int sessionId, int deviceId, int locationId) {
         this.sessionId = sessionId;
         this.deviceId = deviceId;
         this.locationId = locationId;

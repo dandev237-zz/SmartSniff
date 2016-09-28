@@ -2,8 +2,8 @@ package xyz.smartsniff;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.CheckBox;
@@ -12,9 +12,11 @@ import android.widget.Toast;
 
 import com.google.android.gms.location.LocationRequest;
 
+import xyz.smartsniff.Utils.Utils;
+
 /**
  * Settings activity. Contains the configuration options available to the user.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 17/07/2016
@@ -30,7 +32,28 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences.OnSharedPreferenceChangeListener prefChangeListener;
     private CheckBox energySavingCheckBox;
     private EditText intervalEditText;
+    private final TextWatcher intervalWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+        }
 
+        @Override
+        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            if (charSequence.length() > 0) {
+                int number = Integer.parseInt(intervalEditText.getText().toString());
+
+                if (number <= MINIMUM_INTERVAL_SCAN_VALUE_INT - 1) {
+                    intervalEditText.setText(MINIMUM_INTERVAL_SCAN_VALUE_STR);
+                } else if (number > MAXIMUM_INTERVAL_SCAN_VALUE_INT + 1) {
+                    intervalEditText.setText(MAXIMUM_INTERVAL_SCAN_VALUE_STR);
+                }
+            }
+        }
+
+        @Override
+        public void afterTextChanged(Editable editable) {
+        }
+    };
     private boolean energySavingMode, preferencesChanged;
     private int energyPref, scanIntervalPref;
 
@@ -40,7 +63,7 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
 
         preferences = getSharedPreferences(Utils.PREFS_NAME, Context.MODE_PRIVATE);
-        prefChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener(){
+        prefChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
                 preferencesChanged = true;
@@ -53,7 +76,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop(){
+    protected void onStop() {
         super.onStop();
         saveUserSettings();
         preferences.unregisterOnSharedPreferenceChangeListener(prefChangeListener);
@@ -62,7 +85,7 @@ public class SettingsActivity extends AppCompatActivity {
     private void loadUserSettings() {
         energySavingCheckBox = (CheckBox) findViewById(R.id.energySavingCheckBox);
         energyPref = preferences.getInt(Utils.PREF_GPS_PRIORITY, Utils.GPS_PRIORITY_DEFAULT);
-        if(energyPref == LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY){
+        if (energyPref == LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY) {
             setEnergySavingMode(true);
             energySavingCheckBox.setChecked(energySavingMode);
         }
@@ -76,39 +99,18 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void saveUserSettings() {
         setEnergySavingMode(energySavingCheckBox.isChecked());
-        if(isEnergySavingMode())
+        if (isEnergySavingMode())
             energyPref = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
         else
             energyPref = LocationRequest.PRIORITY_HIGH_ACCURACY;
 
         setScanInterval(Integer.parseInt(intervalEditText.getText().toString()));
         preferences.edit().putInt(Utils.PREF_GPS_PRIORITY, energyPref)
-                .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval()*1000).apply();
+                .putInt(Utils.PREF_SCAN_INTERVAL, getScanInterval() * 1000).apply();
 
-        if(preferencesChanged)
+        if (preferencesChanged)
             Toast.makeText(getApplicationContext(), getString(R.string.settings_save_success), Toast.LENGTH_SHORT).show();
     }
-
-    private final TextWatcher intervalWatcher = new TextWatcher() {
-        @Override
-        public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-        @Override
-        public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            if(charSequence.length() > 0){
-                int number = Integer.parseInt(intervalEditText.getText().toString());
-
-                if (number <= MINIMUM_INTERVAL_SCAN_VALUE_INT - 1) {
-                    intervalEditText.setText(MINIMUM_INTERVAL_SCAN_VALUE_STR);
-                } else if (number > MAXIMUM_INTERVAL_SCAN_VALUE_INT + 1) {
-                    intervalEditText.setText(MAXIMUM_INTERVAL_SCAN_VALUE_STR);
-                }
-            }
-        }
-
-        @Override
-        public void afterTextChanged(Editable editable) {}
-    };
 
     public boolean isEnergySavingMode() {
         return energySavingMode;

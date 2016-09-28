@@ -1,10 +1,12 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Model;
 
 import java.util.Date;
 
+import xyz.smartsniff.Utils.Utils;
+
 /**
  * Model class to represent sessions.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -14,14 +16,14 @@ public class Session {
     private Date startDate, endDate;
     private String macAddress;
 
-    public Session(Date startDate){
+    public Session(Date startDate) {
         this(startDate, null);
     }
 
-    public Session(Date startDate, Date endDate){
+    public Session(Date startDate, Date endDate) {
         this.startDate = startDate;
 
-        if(endDate != null)
+        if (endDate != null)
             this.endDate = endDate;
     }
 

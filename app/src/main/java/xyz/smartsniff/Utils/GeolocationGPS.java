@@ -1,4 +1,4 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Utils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -28,7 +28,7 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 /**
  * Implementation of a geolocation method using Google Play Services API.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 16/05/2016
@@ -63,7 +63,7 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
         requestingLocationUpdates = true;
     }
 
-        public void connect() {
+    public void connect() {
         googleApiClient.connect();
     }
 
@@ -120,7 +120,7 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
         LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
-    protected void stopLocationUpdates(){
+    protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
     }
 
@@ -143,7 +143,7 @@ public class GeolocationGPS implements ConnectionCallbacks, OnConnectionFailedLi
 
     @Override
     public void onLocationChanged(Location location) {
-        if(location != null){
+        if (location != null) {
             latitude = location.getLatitude();
             longitude = location.getLongitude();
         }

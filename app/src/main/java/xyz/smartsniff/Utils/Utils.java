@@ -1,4 +1,4 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Utils;
 
 import com.android.volley.RequestQueue;
 import com.google.android.gms.location.LocationRequest;
@@ -15,7 +15,7 @@ import java.util.Locale;
 
 /**
  * Class with methods used across the app.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -40,10 +40,11 @@ public class Utils {
 
     /**
      * Given a date, this function returns the date with the format "dd/MM/yyyy HH:mm:ss"
-     * @param date  The date to format.
-     * @return      The date, formatted.
+     *
+     * @param date The date to format.
+     * @return The date, formatted.
      */
-    public static String formatDate(Date date){
+    public static String formatDate(Date date) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
         String formattedDate = dateFormat.format(date);
 
@@ -53,10 +54,11 @@ public class Utils {
     /**
      * This method does the inverse operation of 'formatDate'.
      * Given a formatted date (string), returns the same date contained in a Date object.
-     * @param stringDate    The string to parse.
-     * @return              The date, in a Date object.
+     *
+     * @param stringDate The string to parse.
+     * @return The date, in a Date object.
      */
-    public static Date reverseFormatDate(String stringDate){
+    public static Date reverseFormatDate(String stringDate) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
         Date date = null;
         try {
@@ -73,10 +75,11 @@ public class Utils {
      * This method returns the mac address of the Android device executing the application.
      * Since Android 6.0 (Marshmallow), it is no longer possible to use "getConnectionInfo().getMacAddress()"
      * to obtain the mac address. This workaround solves this problem.
-     *
+     * <p>
      * Reference: http://robinhenniges.com/en/android6-get-mac-address-programmatically
      * This piece of code is freely available to use for any user (see reference for more license details)
-     * @return  The Mac Address of the Android device executing the application.
+     *
+     * @return The Mac Address of the Android device executing the application.
      */
     public static String getMacAddr() {
         try {
@@ -91,7 +94,7 @@ public class Utils {
 
                 StringBuilder res1 = new StringBuilder();
                 for (byte b : macBytes) {
-                    res1.append(String.format("%02X:",b));
+                    res1.append(String.format("%02X:", b));
                 }
 
                 if (res1.length() > 0) {

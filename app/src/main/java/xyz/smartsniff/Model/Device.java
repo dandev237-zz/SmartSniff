@@ -1,4 +1,4 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Model;
 
 import android.app.Activity;
 import android.net.wifi.ScanResult;
@@ -11,9 +11,12 @@ import com.android.volley.toolbox.Volley;
 
 import java.io.Serializable;
 
+import xyz.smartsniff.Utils.DatabaseHelper;
+import xyz.smartsniff.Utils.Utils;
+
 /**
  * Model class to represent devices.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -24,15 +27,15 @@ public class Device implements Serializable {
     private DeviceType type;
 
     public Device(String ssid, String bssid, String characteristics, int channelWidthConstant, int frequency, int
-            signalIntensity, DeviceType type){
+            signalIntensity, DeviceType type) {
         this(ssid, bssid, characteristics, null, channelWidthConstant, frequency, signalIntensity, type);
     }
 
     public Device(String ssid, String bssid, String characteristics, String manufacturer, Object channelWidth, int
-            frequency, int signalIntensity, DeviceType type){
+            frequency, int signalIntensity, DeviceType type) {
         //Null check to avoid violating the NOT-NULL restriction
         //Usually we enter this check because we have found a bluetooth device with no friendly name
-        if(ssid == null)
+        if (ssid == null)
             this.ssid = "nameNotDefined";
         else
             this.ssid = ssid;
@@ -40,25 +43,25 @@ public class Device implements Serializable {
         this.characteristics = characteristics;
         this.type = type;
 
-        if(this.type.equals(DeviceType.WIFI)){
-            if(channelWidth.getClass().equals(Integer.class)){
+        if (this.type.equals(DeviceType.WIFI)) {
+            if (channelWidth.getClass().equals(Integer.class)) {
                 int constant = (Integer) channelWidth;
 
-                if(constant != 9999)
+                if (constant != 9999)
                     this.channelWidth = selectChannelWidthFromConstant(constant);
-            }else if(channelWidth.getClass().equals(String.class)){
+            } else if (channelWidth.getClass().equals(String.class)) {
                 this.channelWidth = (String) channelWidth;
             }
 
 
-            if(frequency != 0)
+            if (frequency != 0)
                 this.frequency = frequency;
 
-            if(signalIntensity != 9999)
+            if (signalIntensity != 9999)
                 this.signalIntensity = signalIntensity;
         }
 
-        if(manufacturer != null)
+        if (manufacturer != null)
             this.manufacturer = manufacturer;
 
 
@@ -75,7 +78,7 @@ public class Device implements Serializable {
      */
     public void getManufacturerFromBssid(Activity mainActivity) {
         //Fix to avoid creating a requestQueue for each request (OutOfMemory error)
-        if(Utils.queue == null)
+        if (Utils.queue == null)
             Utils.queue = Volley.newRequestQueue(mainActivity);
 
         final DatabaseHelper dbHelper = DatabaseHelper.getInstance(mainActivity);
@@ -103,10 +106,10 @@ public class Device implements Serializable {
         Utils.queue.add(request);
     }
 
-    private String selectChannelWidthFromConstant(int constant){
+    private String selectChannelWidthFromConstant(int constant) {
         String result = null;
 
-        switch(constant){
+        switch (constant) {
             case ScanResult.CHANNEL_WIDTH_20MHZ:
                 result = "20 MHz";
                 break;
@@ -132,11 +135,12 @@ public class Device implements Serializable {
 
     /**
      * Two devices are the same device if and only if their MAC addresses are equal
+     *
      * @param other the device to be compared to this device.
-     * @return  whether or not both devices are equal.
+     * @return whether or not both devices are equal.
      */
     @Override
-    public boolean equals(Object other){
+    public boolean equals(Object other) {
         boolean isEqual = false;
         if (other instanceof Device && this.getBssid().equals(((Device) other).getBssid()))
             isEqual = true;
@@ -145,7 +149,7 @@ public class Device implements Serializable {
     }
 
     @Override
-    public int hashCode(){
+    public int hashCode() {
         int hash = getBssid().hashCode();
         return hash;
     }
@@ -180,13 +184,13 @@ public class Device implements Serializable {
         return manufacturer;
     }
 
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+
     private void setManufacturer(String response, DatabaseHelper dbHelper) {
         this.manufacturer = response;
         dbHelper.updateDeviceWithManufacturer(this);
-    }
-
-    public void setManufacturer(String manufacturer){
-        this.manufacturer = manufacturer;
     }
 
     public DeviceType getType() {

@@ -2,8 +2,8 @@ package xyz.smartsniff;
 
 import android.app.Dialog;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -16,9 +16,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import xyz.smartsniff.Model.Device;
+import xyz.smartsniff.Model.DeviceType;
+import xyz.smartsniff.Utils.DatabaseHelper;
+import xyz.smartsniff.Utils.Utils;
+
 /**
  * Results activity. Contains a presentation of the results of any given session
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 11/09/2016
@@ -44,7 +49,8 @@ public class ResultsActivity extends AppCompatActivity {
         String endDate = resultsIntent.getStringExtra("lastSessionEndDate");
         HashSet<Device> lastSessionDevices = Utils.gson.fromJson(
                 resultsIntent.getStringExtra("lastSessionDevices"),
-                new TypeToken<HashSet<Device>>(){}.getType()
+                new TypeToken<HashSet<Device>>() {
+                }.getType()
         );
 
         initDateTextView.setText(initDate);
@@ -83,7 +89,7 @@ public class ResultsActivity extends AppCompatActivity {
         bssidTextView.setText(device.getBssid());
 
         manufacturerTextView = (TextView) dialog.findViewById(R.id.manufacturerTextView);
-        if(device.getManufacturer() == null){
+        if (device.getManufacturer() == null) {
             device.setManufacturer(dbHelper.getManufacturerOfDevice(device.getBssid()));
         }
         manufacturerTextView.setText(device.getManufacturer());
@@ -91,7 +97,7 @@ public class ResultsActivity extends AppCompatActivity {
         capabilitiesTextView = (TextView) dialog.findViewById(R.id.capabilitiesTextView);
         capabilitiesTextView.setText(device.getCharacteristics());
 
-        if(device.getType().equals(DeviceType.WIFI)){
+        if (device.getType().equals(DeviceType.WIFI)) {
             channelWidthTextView = (TextView) dialog.findViewById(R.id.channelWidthTextView);
             channelWidthTextView.setText(device.getChannelWidth());
 
@@ -100,7 +106,7 @@ public class ResultsActivity extends AppCompatActivity {
 
             signalTextView = (TextView) dialog.findViewById(R.id.signalTextView);
             signalTextView.setText(String.format("%s dBm", String.valueOf(device.getSignalIntensity())));
-        }else{
+        } else {
             TableLayout wifiDetailsLayout = (TableLayout) dialog.findViewById(R.id.wifiDetailsLayout);
             wifiDetailsLayout.removeAllViews();
 

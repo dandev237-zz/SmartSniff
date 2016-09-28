@@ -1,4 +1,4 @@
-package xyz.smartsniff;
+package xyz.smartsniff.Utils;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -22,10 +22,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import xyz.smartsniff.Model.Association;
+import xyz.smartsniff.Model.Device;
+import xyz.smartsniff.Model.Location;
+import xyz.smartsniff.Model.Session;
+import xyz.smartsniff.R;
+
 /**
  * Class responsible for generating and assembling a JSON object containing all the stored data in the local device
  * database.
- *
+ * <p>
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 14/08/2016
@@ -37,7 +43,7 @@ public class JSONGenerator {
 
     private ProgressDialog progressDialog;
 
-    public JSONGenerator(Activity context){
+    public JSONGenerator(Activity context) {
         this.mainActivity = context;
         databaseHelper = DatabaseHelper.getInstance(context);
     }
@@ -45,7 +51,7 @@ public class JSONGenerator {
     /**
      * Method which starts the data sending procedure.
      */
-    public void sendJSONToServer(){
+    public void sendJSONToServer() {
         initializeProgressDialog();
         progressDialog.show();
 
@@ -55,7 +61,8 @@ public class JSONGenerator {
     /**
      * This method prepares the JSON object to be included in the HTTP Post request
      * that will send it to the external database.
-     * @return  The complete JSON object.
+     *
+     * @return The complete JSON object.
      */
     private JSONObject prepareJsonObject() {
         //Collect all the associations data
@@ -76,7 +83,8 @@ public class JSONGenerator {
     /**
      * Method responsible for getting the data from the local database to serialize it. Such data will then
      * be used to populate a JSON object.
-     * @param associations  All the associations stored in the local database
+     *
+     * @param associations All the associations stored in the local database
      * @throws JSONException
      */
     private void buildJSON(List<Association> associations) throws JSONException {
@@ -91,31 +99,31 @@ public class JSONGenerator {
         Map<Integer, Location> consideredLocations = new HashMap<>();
 
         JSONArray associationsArray = new JSONArray();
-        for(Association a: associations){
+        for (Association a : associations) {
             Session s;
-            if(consideredSessions.containsKey(a.sessionId))
-                s = consideredSessions.get(a.sessionId);
+            if (consideredSessions.containsKey(a.getSessionId()))
+                s = consideredSessions.get(a.getSessionId());
             else {
-                s = databaseHelper.getSession(a.sessionId);
+                s = databaseHelper.getSession(a.getSessionId());
                 //Add the device Mac Address to the Session object
                 s.setMacAddress(Utils.getMacAddr());
-                consideredSessions.put(a.sessionId, s);
+                consideredSessions.put(a.getSessionId(), s);
             }
 
             Device d;
-            if(consideredDevices.containsKey(a.deviceId))
-                d = consideredDevices.get(a.deviceId);
+            if (consideredDevices.containsKey(a.getDeviceId()))
+                d = consideredDevices.get(a.getDeviceId());
             else {
-                d = databaseHelper.getDevice(a.deviceId);
-                consideredDevices.put(a.deviceId, d);
+                d = databaseHelper.getDevice(a.getDeviceId());
+                consideredDevices.put(a.getDeviceId(), d);
             }
 
             Location l;
-            if(consideredLocations.containsKey(a.locationId))
-                l = consideredLocations.get(a.locationId);
+            if (consideredLocations.containsKey(a.getLocationId()))
+                l = consideredLocations.get(a.getLocationId());
             else {
-                l = databaseHelper.getLocation(a.locationId);
-                consideredLocations.put(a.locationId, l);
+                l = databaseHelper.getLocation(a.getLocationId());
+                consideredLocations.put(a.getLocationId(), l);
             }
 
             JSONObject associationObject = new JSONObject();
@@ -135,19 +143,19 @@ public class JSONGenerator {
         }
 
         JSONArray sessionsArray = new JSONArray();
-        for(Session s: consideredSessions.values()){
+        for (Session s : consideredSessions.values()) {
             JSONObject sessionObject = new JSONObject(Utils.gson.toJson(s));
             sessionsArray.put(sessionObject);
         }
 
         JSONArray devicesArray = new JSONArray();
-        for(Device d: consideredDevices.values()){
+        for (Device d : consideredDevices.values()) {
             JSONObject deviceObject = new JSONObject(Utils.gson.toJson(d));
             devicesArray.put(deviceObject);
         }
 
         JSONArray locationsArray = new JSONArray();
-        for(Location l: consideredLocations.values()){
+        for (Location l : consideredLocations.values()) {
             JSONObject locationObject = new JSONObject(Utils.gson.toJson(l));
             locationsArray.put(locationObject);
         }
@@ -158,7 +166,7 @@ public class JSONGenerator {
         jsonObject.put("asocsessiondevices", associationsArray);
     }
 
-    private void initializeProgressDialog(){
+    private void initializeProgressDialog() {
         progressDialog = new ProgressDialog(mainActivity);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         progressDialog.setMessage(mainActivity.getString(R.string.jsongenerator_sending_data));
@@ -180,7 +188,7 @@ public class JSONGenerator {
                 jsonObject = prepareJsonObject();
 
                 //Send the JSON object to the server using the RESTful API
-                String url = "http://bustrack.undo.it:5000/api/db/storedata";
+                String url = "http://192.168.1.199:5001/api/db/storedata";
                 JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                         new Response.Listener<JSONObject>() {
                             @Override
@@ -200,22 +208,20 @@ public class JSONGenerator {
                     //Workaround for dealing with empty response
                     //Reference: http://stackoverflow.com/a/24566878
                     @Override
-                    protected Response<JSONObject> parseNetworkResponse(NetworkResponse response){
-                        try{
-                            if(response.data.length == 0){
-                                if (response.data.length == 0) {
-                                    byte[] responseData = "{}".getBytes("UTF8");
-                                    response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
-                                }
+                    protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
+                        try {
+                            if (response.data.length == 0) {
+                                byte[] responseData = "{}".getBytes("UTF8");
+                                response = new NetworkResponse(response.statusCode, responseData, response.headers, response.notModified);
                             }
-                        }catch(UnsupportedEncodingException e){
+                        } catch (UnsupportedEncodingException e) {
                             e.printStackTrace();
                         }
                         return super.parseNetworkResponse(response);
                     }
 
                 };
-                if(Utils.queue == null)
+                if (Utils.queue == null)
                     Utils.queue = Volley.newRequestQueue(mainActivity);
 
                 Utils.queue.add(postRequest);
@@ -225,7 +231,7 @@ public class JSONGenerator {
         }
 
         @Override
-        protected void onPostExecute(Void v){
+        protected void onPostExecute(Void v) {
             //Dismiss the loading screen
             progressDialog.dismiss();
         }
