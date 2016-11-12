@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartSniff</string>
+    <string name="action_delete_data">Delete data</string>
+    <string name="action_send_data">Send data</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_update_map">Update map</string>
+    <string name="data_send_error_2">ERROR: No data to send</string>
+    <string name="delete_alert_dialog_message">You are about to delete all the data stored in the internal database. This operation cannot be reversed. Are you sure you want to proceed?</string>
+    <string name="delete_alert_dialog_negative_button">No, cancel</string>
+    <string name="delete_alert_dialog_title">Alert - Data deletion</string>
+    <string name="delete_alert_dialog_possitive_button">Yes, continue</string>
+    <string name="delete_data_error">ERROR: No data to delete</string>
+    <string name="discoveries">Nº. discoveries:</string>
+    <string name="energy_saving_explanation">If energy saving mode is activated, the phone will obtain localization data from Internet, instead of using the GPS.</string>
+    <string name="energy_saving_text">Energy saving mode</string>
+    <string name="init_date">Start date:</string>
+    <string name="interval_explanation">Time, expressed in seconds, between device scans. (From 2 to 10 seconds)</string>
+    <string name="interval_text">Scan interval</string>
+    <string name="jsongenerator_data_sent">Data sent</string>
+    <string name="jsongenerator_send_error">ERROR: Data could not be sent</string>
+    <string name="jsongenerator_sending_data">Sending data to server...</string>
+    <string name="mapmanager_loading_map">Loading heatmap, please wait...</string>
+    <string name="mapmanager_updating_map">Updating heatmap, please wait...</string>
+    <string name="result_channel_width">Channel width:</string>
+    <string name="result_characteristics">Characteristics:</string>
+    <string name="result_device_type">Device type:</string>
+    <string name="result_end_date">End date:</string>
+    <string name="result_frequency">Frequency:</string>
+    <string name="result_mac_address">MAC Address:</string>
+    <string name="result_manufacturer">Manufacturer:</string>
+    <string name="result_name">Name:</string>
+    <string name="result_signal_intensity">Signal strength:</string>
+    <string name="result_title">Details</string>
+    <string name="scan_button_standby">Scan</string>
+    <string name="scan_button_stop">Stop</string>
+    <string name="scan_ended">\"Scan ended. Discoveries: \"</string>
+    <string name="session_results">Session results</string>
+    <string name="settings_save_success">Settings stored successfully.</string>
+    <string name="total_discoveries">Nº. total discoveries:</string>
+</resources>

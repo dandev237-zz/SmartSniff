@@ -31,7 +31,7 @@ import xyz.smartsniff.R;
 /**
  * Class responsible for generating and assembling a JSON object containing all the stored data in the local device
  * database.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 14/08/2016
@@ -188,7 +188,7 @@ public class JSONGenerator {
                 jsonObject = prepareJsonObject();
 
                 //Send the JSON object to the server using the RESTful API
-                String url = "http://192.168.1.199:5001/api/db/storedata";
+                String url = "http://bustrack.undo.it:5000/api/db/storedata";
                 JsonObjectRequest postRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                         new Response.Listener<JSONObject>() {
                             @Override
@@ -206,7 +206,6 @@ public class JSONGenerator {
                         }) {
 
                     //Workaround for dealing with empty response
-                    //Reference: http://stackoverflow.com/a/24566878
                     @Override
                     protected Response<JSONObject> parseNetworkResponse(NetworkResponse response) {
                         try {

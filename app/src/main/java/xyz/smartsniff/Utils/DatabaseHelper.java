@@ -25,7 +25,7 @@ import xyz.smartsniff.Model.Session;
 
 /**
  * This class handles database operations such as reading, writing and upgrading.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -148,7 +148,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      */
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        //Simplest implementation possible
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_SESSIONS);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICES);
         sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_LOCATIONS);
@@ -409,8 +408,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     /**
      * Returns the number of sessions stored in this database.
-     *
-     * @return
      */
     public int getNumberOfSessions() {
         int numberOfSessions = 0;

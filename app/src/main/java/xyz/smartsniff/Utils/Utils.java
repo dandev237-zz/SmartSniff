@@ -15,7 +15,7 @@ import java.util.Locale;
 
 /**
  * Class with methods used across the app.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -75,7 +75,7 @@ public class Utils {
      * This method returns the mac address of the Android device executing the application.
      * Since Android 6.0 (Marshmallow), it is no longer possible to use "getConnectionInfo().getMacAddress()"
      * to obtain the mac address. This workaround solves this problem.
-     * <p>
+     *
      * Reference: http://robinhenniges.com/en/android6-get-mac-address-programmatically
      * This piece of code is freely available to use for any user (see reference for more license details)
      *

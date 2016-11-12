@@ -16,7 +16,7 @@ import xyz.smartsniff.Utils.Utils;
 
 /**
  * Settings activity. Contains the configuration options available to the user.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 17/07/2016

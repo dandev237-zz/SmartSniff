@@ -23,7 +23,7 @@ import xyz.smartsniff.Utils.Utils;
 
 /**
  * Results activity. Contains a presentation of the results of any given session
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 11/09/2016

@@ -22,7 +22,7 @@ import xyz.smartsniff.Utils.Utils;
 
 /**
  * Class with all the map-related functionality.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 17/08/2016

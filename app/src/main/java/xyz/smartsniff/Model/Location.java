@@ -9,7 +9,7 @@ import xyz.smartsniff.Utils.Utils;
 
 /**
  * Model class to represent locations.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 30/06/2016
@@ -30,8 +30,6 @@ public class Location {
 
     /**
      * Overloaded constructor used when reloading the heatmap.
-     *
-     * @param coordinates
      */
     public Location(LatLng coordinates) {
         this(null, coordinates);
@@ -61,8 +59,6 @@ public class Location {
      * A location is valid if its coordinates are not (0.0, 0.0)
      * This is a fail-safe function to ensure we are only registering locations received via
      * geolocation services.
-     *
-     * @return
      */
     public boolean isValidLocation() {
         return coordinates.latitude != 0.0 && coordinates.longitude != 0.0;

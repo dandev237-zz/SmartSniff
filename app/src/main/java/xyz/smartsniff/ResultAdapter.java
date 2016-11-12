@@ -15,7 +15,7 @@ import xyz.smartsniff.Model.DeviceType;
 
 /**
  * Custom adapter to control the list view which will contain the results (devices) of a given session
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 11/09/2016

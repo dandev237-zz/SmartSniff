@@ -49,7 +49,7 @@ import xyz.smartsniff.Utils.Utils;
 /**
  * Main activity of the application. Contains the scanning interface and the
  * appbar.
- * <p>
+ *
  * Author: Daniel Castro García
  * Email: dandev237@gmail.com
  * Date: 29/06/2016
